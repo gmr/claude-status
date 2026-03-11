@@ -89,6 +89,11 @@
 			path = "Claude StatusWidget";
 			sourceTree = "<group>";
 		};
+		C3SH00012F6200000001617B /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,6 +125,7 @@
 			isa = PBXGroup;
 			children = (
 				C34C64852F60BDA3001D617B /* Claude StatusWidgetExtension.entitlements */,
+				C3SH00012F6200000001617B /* Shared */,
 				C34C643A2F60BDA1001D617B /* Claude Status */,
 				C34C644A2F60BDA2001D617B /* Claude StatusTests */,
 				C34C64732F60BDA3001D617B /* Claude StatusWidget */,
@@ -167,6 +173,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				C34C643A2F60BDA1001D617B /* Claude Status */,
+				C3SH00012F6200000001617B /* Shared */,
 			);
 			name = "Claude Status";
 			packageProductDependencies = (
@@ -212,6 +219,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				C34C64732F60BDA3001D617B /* Claude StatusWidget */,
+				C3SH00012F6200000001617B /* Shared */,
 			);
 			name = "Claude StatusWidgetExtension";
 			packageProductDependencies = (
