@@ -54,10 +54,10 @@ struct PluginDetector {
         }
 
         // Find the claude-status plugin entry — value is an array of install records
-        for (key, value) in plugins where key.contains("claude-status") {
+        for (key, value) in plugins where key.hasPrefix("claude-status@") {
             guard let records = value as? [[String: Any]],
-                  let first = records.first,
-                  let version = first["version"] as? String else {
+                  let latest = records.last,
+                  let version = latest["version"] as? String else {
                 continue
             }
             return version
@@ -79,7 +79,7 @@ struct PluginDetector {
             return false
         }
 
-        let installed = plugins.keys.contains { $0.contains("claude-status") }
+        let installed = plugins.keys.contains { $0.hasPrefix("claude-status@") }
         guard installed else { return false }
 
         // Also verify it's enabled
@@ -90,7 +90,7 @@ struct PluginDetector {
             return installed // installed but can't check enabled — assume yes
         }
 
-        return enabled.keys.contains { $0.contains("claude-status") }
+        return enabled.keys.contains { $0.hasPrefix("claude-status@") }
     }
 
     // MARK: - Settings Hooks Check

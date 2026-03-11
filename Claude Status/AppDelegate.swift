@@ -337,7 +337,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Version mismatch — reinstall silently (uninstall + install)
-        _ = pluginInstaller.uninstall()
+        if let uninstallError = pluginInstaller.uninstall() {
+            NSLog("Claude Status: plugin uninstall failed during auto-update: %@", uninstallError)
+            return
+        }
         if let error = pluginInstaller.install() {
             NSLog("Claude Status: plugin auto-update from %@ to %@ failed: %@",
                   installedVersion, bundledVersion, error)

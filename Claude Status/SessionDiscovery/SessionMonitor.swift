@@ -120,18 +120,21 @@ final class SessionMonitor {
     /// Applies a discovery result: updates sessions, cache, and hook detection.
     /// Only writes to the shared container and reloads the widget when data changes.
     private func applyResult(_ result: SessionDiscovery.DiscoveryResult) {
-        let changed = sessions != result.sessions
+        let sessionsChanged = sessions != result.sessions
         sessions = result.sessions
         cstatusCache = result.cstatusFiles
 
         // Track time-in-state for productivity scoring
         tracker.recordSnapshot(sessions: result.sessions)
-        productivityData = tracker.currentData
+        let newProductivity = tracker.currentData
+        let productivityChanged = newProductivity.today.score != productivityData.today.score
+            || newProductivity.today.totalTrackedTime != productivityData.today.totalTrackedTime
+        productivityData = newProductivity
 
         updatePluginState()
 
-        if changed {
-            writeSessionsToSharedContainer()
+        if sessionsChanged || productivityChanged {
+            writeToSharedContainer()
         }
     }
 
@@ -157,20 +160,22 @@ final class SessionMonitor {
 
     // MARK: - Shared Data
 
-    private func writeSessionsToSharedContainer() {
+    private func writeToSharedContainer() {
         guard let sharedURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "group.com.poisonpenllc.Claude-Status"
         ) else {
             return
         }
 
-        let dataURL = sharedURL.appendingPathComponent("sessions.json")
-
-        guard let encoded = try? JSONEncoder().encode(sessions) else {
-            return
+        if let encoded = try? JSONEncoder().encode(sessions) {
+            let dataURL = sharedURL.appendingPathComponent("sessions.json")
+            try? encoded.write(to: dataURL, options: .atomic)
         }
 
-        try? encoded.write(to: dataURL, options: .atomic)
+        if let encoded = try? JSONEncoder().encode(productivityData) {
+            let prodURL = sharedURL.appendingPathComponent("productivity.json")
+            try? encoded.write(to: prodURL, options: .atomic)
+        }
 
         WidgetCenter.shared.reloadTimelines(ofKind: "Claude_StatusWidget")
         WidgetCenter.shared.reloadTimelines(ofKind: "Claude_ProductivityWidget")
