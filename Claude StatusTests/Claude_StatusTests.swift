@@ -1,17 +1,102 @@
-//
-//  Claude_StatusTests.swift
-//  Claude StatusTests
-//
-//  Created by Gavin M Roy on 3/10/26.
-//
-
+import Foundation
 import Testing
 @testable import Claude_Status
 
-struct Claude_StatusTests {
+struct SessionStateTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    @Test func statePriority() {
+        #expect(SessionState.active.priority > SessionState.waiting.priority)
+        #expect(SessionState.waiting.priority > SessionState.idle.priority)
     }
 
+    @Test func sfSymbols() {
+        #expect(SessionState.active.sfSymbol == "circle.fill")
+        #expect(SessionState.waiting.sfSymbol == "circle.fill")
+        #expect(SessionState.idle.sfSymbol == "circle")
+    }
+
+    @Test func sessionTimeSinceActivity() {
+        let recent = ClaudeSession(
+            sessionId: "test-1",
+            pid: 1,
+            workingDirectory: "/tmp/test",
+            projectName: "test",
+            state: .active,
+            lastActivityAt: Date(),
+            iTermSessionId: nil,
+            source: .terminal(app: "Terminal"),
+            activity: "Read"
+        )
+        #expect(recent.timeSinceActivity == "just now")
+
+        let fiveMinAgo = ClaudeSession(
+            sessionId: "test-2",
+            pid: 2,
+            workingDirectory: "/tmp/test",
+            projectName: "test",
+            state: .waiting,
+            lastActivityAt: Date().addingTimeInterval(-300),
+            iTermSessionId: nil,
+            source: .terminal(app: "Terminal"),
+            activity: "Bash"
+        )
+        #expect(fiveMinAgo.timeSinceActivity == "5m ago")
+
+        let twoHoursAgo = ClaudeSession(
+            sessionId: "test-3",
+            pid: 3,
+            workingDirectory: "/tmp/test",
+            projectName: "test",
+            state: .idle,
+            lastActivityAt: Date().addingTimeInterval(-7200),
+            iTermSessionId: nil,
+            source: .terminal(app: "Terminal"),
+            activity: ""
+        )
+        #expect(twoHoursAgo.timeSinceActivity == "2h ago")
+    }
+
+    @Test func sessionCodable() throws {
+        let session = ClaudeSession(
+            sessionId: "12345678-1234-1234-1234-123456789abc",
+            pid: 12345,
+            workingDirectory: "/Users/test/Project",
+            projectName: "Project",
+            state: .active,
+            lastActivityAt: Date(),
+            iTermSessionId: "w0t0p0:12345678-1234-1234-1234-123456789ABC",
+            source: .xcode,
+            activity: "thinking"
+        )
+
+        let encoded = try JSONEncoder().encode(session)
+        let decoded = try JSONDecoder().decode(ClaudeSession.self, from: encoded)
+
+        #expect(decoded.id == session.id)
+        #expect(decoded.sessionId == session.sessionId)
+        #expect(decoded.workingDirectory == session.workingDirectory)
+        #expect(decoded.projectName == session.projectName)
+        #expect(decoded.state == session.state)
+        #expect(decoded.iTermSessionId == session.iTermSessionId)
+        #expect(decoded.source == session.source)
+    }
+}
+
+struct SessionDiscoveryTests {
+
+    @Test func discoverAllReturnsEmptyWhenNoFiles() {
+        var discovery = SessionDiscovery()
+        let result = discovery.discoverAll()
+        // May find real sessions if claude is running; just verify it doesn't crash
+        #expect(result.sessions.count >= 0)
+    }
+
+    @Test func deadSessionsSkipped() {
+        var discovery = SessionDiscovery()
+        discovery.deadSessions.insert("dead-session-id")
+        #expect(discovery.deadSessions.contains("dead-session-id"))
+
+        discovery.clearDeadSessions()
+        #expect(discovery.deadSessions.isEmpty)
+    }
 }

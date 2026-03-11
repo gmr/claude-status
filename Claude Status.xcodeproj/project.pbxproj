@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C3WE000B2F60BDA3001D617B /* Claude StatusWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C3WE00012F60BDA3001D617B /* Claude StatusWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		C34C64482F60BDA2001D617B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,13 +25,48 @@
 			remoteGlobalIDString = C34C64372F60BDA1001D617B;
 			remoteInfo = "Claude Status";
 		};
+		C3WE00092F60BDA3001D617B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C34C64302F60BDA1001D617B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C3WE00052F60BDA3001D617B;
+			remoteInfo = "Claude StatusWidgetExtension";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C34C64842F60BDA3001D617B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C3WE000B2F60BDA3001D617B /* Claude StatusWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		C34C64382F60BDA1001D617B /* Claude Status.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Claude Status.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34C64472F60BDA2001D617B /* Claude StatusTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Claude StatusTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34C64512F60BDA2001D617B /* Claude StatusUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Claude StatusUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C34C646F2F60BDA3001D617B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		C34C64712F60BDA3001D617B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		C34C64852F60BDA3001D617B /* Claude StatusWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Claude StatusWidgetExtension.entitlements"; sourceTree = "<group>"; };
+		C3WE00012F60BDA3001D617B /* Claude StatusWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Claude StatusWidgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C3WE000C2F60BDA3001D617B /* Exceptions for "Claude StatusWidget" folder in "Claude StatusWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C3WE00052F60BDA3001D617B /* Claude StatusWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C34C643A2F60BDA1001D617B /* Claude Status */ = {
@@ -43,6 +82,14 @@
 		C34C64542F60BDA2001D617B /* Claude StatusUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Claude StatusUITests";
+			sourceTree = "<group>";
+		};
+		C34C64732F60BDA3001D617B /* Claude StatusWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C3WE000C2F60BDA3001D617B /* Exceptions for "Claude StatusWidget" folder in "Claude StatusWidgetExtension" target */,
+			);
+			path = "Claude StatusWidget";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,15 +116,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C3WE00032F60BDA3001D617B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		C34C642F2F60BDA1001D617B = {
 			isa = PBXGroup;
 			children = (
+				C34C64852F60BDA3001D617B /* Claude StatusWidgetExtension.entitlements */,
 				C34C643A2F60BDA1001D617B /* Claude Status */,
 				C34C644A2F60BDA2001D617B /* Claude StatusTests */,
 				C34C64542F60BDA2001D617B /* Claude StatusUITests */,
+				C34C64732F60BDA3001D617B /* Claude StatusWidget */,
+				C34C646E2F60BDA3001D617B /* Frameworks */,
 				C34C64392F60BDA1001D617B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +145,18 @@
 				C34C64382F60BDA1001D617B /* Claude Status.app */,
 				C34C64472F60BDA2001D617B /* Claude StatusTests.xctest */,
 				C34C64512F60BDA2001D617B /* Claude StatusUITests.xctest */,
+				C3WE00012F60BDA3001D617B /* Claude StatusWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C34C646E2F60BDA3001D617B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C34C646F2F60BDA3001D617B /* WidgetKit.framework */,
+				C34C64712F60BDA3001D617B /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,10 +169,13 @@
 				C34C64342F60BDA1001D617B /* Sources */,
 				C34C64352F60BDA1001D617B /* Frameworks */,
 				C34C64362F60BDA1001D617B /* Resources */,
+				C34C64902F60BDA3001D617B /* Bundle Plugin Marketplace */,
+				C34C64842F60BDA3001D617B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C3WE000A2F60BDA3001D617B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C34C643A2F60BDA1001D617B /* Claude Status */,
@@ -163,6 +233,28 @@
 			productReference = C34C64512F60BDA2001D617B /* Claude StatusUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C3WE00052F60BDA3001D617B /* Claude StatusWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C3WE00082F60BDA3001D617B /* Build configuration list for PBXNativeTarget "Claude StatusWidgetExtension" */;
+			buildPhases = (
+				C3WE00022F60BDA3001D617B /* Sources */,
+				C3WE00032F60BDA3001D617B /* Frameworks */,
+				C3WE00042F60BDA3001D617B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C34C64732F60BDA3001D617B /* Claude StatusWidget */,
+			);
+			name = "Claude StatusWidgetExtension";
+			packageProductDependencies = (
+			);
+			productName = "Claude StatusWidgetExtension";
+			productReference = C3WE00012F60BDA3001D617B /* Claude StatusWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +276,9 @@
 						CreatedOnToolsVersion = 26.3;
 						TestTargetID = C34C64372F60BDA1001D617B;
 					};
+					C3WE00052F60BDA3001D617B = {
+						CreatedOnToolsVersion = 26.3;
+					};
 				};
 			};
 			buildConfigurationList = C34C64332F60BDA1001D617B /* Build configuration list for PBXProject "Claude Status" */;
@@ -203,6 +298,7 @@
 				C34C64372F60BDA1001D617B /* Claude Status */,
 				C34C64462F60BDA2001D617B /* Claude StatusTests */,
 				C34C64502F60BDA2001D617B /* Claude StatusUITests */,
+				C3WE00052F60BDA3001D617B /* Claude StatusWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -229,7 +325,34 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C3WE00042F60BDA3001D617B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C34C64902F60BDA3001D617B /* Bundle Plugin Marketplace */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/claude-plugin",
+			);
+			name = "Bundle Plugin Marketplace";
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/Resources/claude-plugin",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "rsync -a --delete \"${SRCROOT}/claude-plugin/\" \"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources/claude-plugin/\"\nchmod +x \"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources/claude-plugin/plugins/claude-status/scripts/session-status.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C34C64342F60BDA1001D617B /* Sources */ = {
@@ -253,6 +376,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C3WE00022F60BDA3001D617B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +395,11 @@
 			isa = PBXTargetDependency;
 			target = C34C64372F60BDA1001D617B /* Claude Status */;
 			targetProxy = C34C64522F60BDA2001D617B /* PBXContainerItemProxy */;
+		};
+		C3WE000A2F60BDA3001D617B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C3WE00052F60BDA3001D617B /* Claude StatusWidgetExtension */;
+			targetProxy = C3WE00092F60BDA3001D617B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -394,15 +529,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Claude Status/Claude Status.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6ZWB9X826X;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -426,15 +566,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Claude Status/Claude Status.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6ZWB9X826X;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -533,6 +678,76 @@
 			};
 			name = Release;
 		};
+		C3WE00062F60BDA3001D617B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "Claude StatusWidgetExtension.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6ZWB9X826X;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Claude StatusWidget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Claude Status Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.poisonpenllc.Claude-Status.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C3WE00072F60BDA3001D617B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "Claude StatusWidgetExtension.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6ZWB9X826X;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Claude StatusWidget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Claude Status Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.poisonpenllc.Claude-Status.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -568,6 +783,15 @@
 			buildConfigurations = (
 				C34C64622F60BDA2001D617B /* Debug */,
 				C34C64632F60BDA2001D617B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C3WE00082F60BDA3001D617B /* Build configuration list for PBXNativeTarget "Claude StatusWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3WE00062F60BDA3001D617B /* Debug */,
+				C3WE00072F60BDA3001D617B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
