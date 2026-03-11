@@ -1,0 +1,25 @@
+{
+  "name": "claude-status-marketplace",
+  "owner": {
+    "name": "Gavin M. Roy",
+    "email": "gavin@poisonpenllc.com"
+  },
+  "metadata": {
+    "description": "Plugin marketplace for the Claude Status macOS menu bar app"
+  },
+  "plugins": [
+    {
+      "name": "claude-status",
+      "source": "./plugins/claude-status",
+      "description": "Reports Claude Code session status for the Claude Status macOS menu bar app",
+      "version": "1.0.0",
+      "author": {
+        "name": "Gavin M. Roy",
+        "url": "https://github.com/gmr"
+      },
+      "repository": "https://github.com/gmr/claude-status",
+      "license": "BSD-3-Clause",
+      "keywords": ["status", "session", "macos", "menu-bar", "monitoring"]
+    }
+  ]
+}
