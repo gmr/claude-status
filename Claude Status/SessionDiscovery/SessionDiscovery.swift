@@ -243,9 +243,13 @@ struct SessionDiscovery {
         }
 
         // If inside tmux, the tmux server is reparented to pid 1 so the
-        // process tree walk won't reach the terminal. Identify the real
-        // terminal from env vars that survive into tmux sessions.
+        // process tree walk won't reach the terminal. Check for IDE env
+        // vars first, then identify the real terminal app.
         if readEnvironmentVariable(for: pid, name: "TMUX") != nil {
+            // VS Code sets VSCODE_* env vars that survive into tmux
+            if readEnvironmentVariable(for: pid, name: "VSCODE_GIT_IPC_HANDLE") != nil {
+                return .vscode
+            }
             return .terminal(app: resolveTerminalFromTmux(pid: pid))
         }
 

@@ -62,7 +62,12 @@ struct SessionFocuser {
         // tmux sessions: select the pane/window then activate the terminal
         if let paneId = tmuxPaneId {
             focusTmuxPane(paneId: paneId, socket: tmuxSocket)
-            activateTerminalApp(name: app)
+            // iTerm2: use AppleScript to focus the tab hosting tmux
+            if app == "iTerm2", let sessionId {
+                focusBySessionId(sessionId)
+            } else {
+                activateTerminalApp(name: app)
+            }
             return
         }
 
