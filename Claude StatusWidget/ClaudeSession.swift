@@ -112,4 +112,25 @@ struct ClaudeSession: Identifiable, Codable {
             return "\(hours)h ago"
         }
     }
+
+    /// Deep link URL for focusing this session from the widget.
+    var deepLinkURL: URL {
+        var components = URLComponents()
+        components.scheme = "claude-status"
+        components.host = "session"
+        components.path = "/\(id)"
+        return components.url ?? URL(string: "claude-status://session/unknown")!
+    }
+}
+
+extension Array where Element == ClaudeSession {
+    /// Sessions sorted by state (Waiting, Active, Compacting, Idle), then most recent first.
+    var sortedByStateAndActivity: [ClaudeSession] {
+        sorted {
+            if $0.state.sortOrder != $1.state.sortOrder {
+                return $0.state.sortOrder < $1.state.sortOrder
+            }
+            return $0.lastActivityAt > $1.lastActivityAt
+        }
+    }
 }

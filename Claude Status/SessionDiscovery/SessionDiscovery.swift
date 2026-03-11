@@ -230,7 +230,7 @@ struct SessionDiscovery {
         guard kill(pid, 0) == 0 else { return false }
         // Verify the process is actually Claude (guards against PID recycling)
         guard let path = executablePath(for: pid) else { return true }
-        return path.contains("claude") || path.contains("Claude") || path.contains("node")
+        return path.contains("claude") || path.contains("Claude") || path.hasSuffix("/node")
     }
 
     // MARK: - Source Classification

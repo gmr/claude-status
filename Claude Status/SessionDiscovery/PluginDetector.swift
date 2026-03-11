@@ -41,6 +41,30 @@ struct PluginDetector {
         return .notInstalled
     }
 
+    /// Returns the installed plugin version from `~/.claude/plugins/installed_plugins.json`,
+    /// or nil if the plugin is not installed or the version can't be determined.
+    func installedPluginVersion() -> String? {
+        let url = Self.claudeDir
+            .appendingPathComponent("plugins/installed_plugins.json")
+
+        guard let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let plugins = json["plugins"] as? [String: Any] else {
+            return nil
+        }
+
+        // Find the claude-status plugin entry — value is an array of install records
+        for (key, value) in plugins where key.contains("claude-status") {
+            guard let records = value as? [[String: Any]],
+                  let first = records.first,
+                  let version = first["version"] as? String else {
+                continue
+            }
+            return version
+        }
+        return nil
+    }
+
     // MARK: - Plugin Check
 
     /// Looks for any plugin key containing "claude-status" in installed_plugins.json,

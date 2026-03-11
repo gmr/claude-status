@@ -12,10 +12,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var eventMonitor: Any?
     private var settingsWindow: NSWindow?
 
+    /// Shared defaults for the app group (cached to avoid per-tick allocation).
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.poisonpenllc.Claude-Status")
+
     /// Cached state for change detection in status icon updates.
     private var lastRenderedState: SessionState?
     private var lastRenderedHookMissing: Bool = false
-    private var lastRenderedIconStyle: String?
+    private var lastRenderedIconStyle: SessionIconStyle?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMainMenu()
@@ -111,8 +114,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let hookMissing = monitor.hookDetected == false
         let aggregateState = monitor.aggregateState
-        let sharedDefaults = UserDefaults(suiteName: "group.com.poisonpenllc.Claude-Status")
-        let iconStyle = sharedDefaults?.string(forKey: "iconStyle")
+        let iconStyle = sharedDefaults.flatMap { defaults in
+            defaults.string(forKey: "iconStyle").flatMap { SessionIconStyle(rawValue: $0) }
+        } ?? .emoji
 
         // Skip redraw if nothing has changed
         if aggregateState == lastRenderedState
@@ -143,7 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.title = ""
             return
         }
-        let useEmoji = iconStyle != "dots"
+        let useEmoji = iconStyle != .dots
 
         if useEmoji {
             // Emoji mode: compose icon with emoji overlay in bottom-right
@@ -307,6 +311,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let detector = PluginDetector()
         let state = detector.detect()
 
+        if state == .installed {
+            // Check if the installed version matches the bundled version
+            checkPluginVersionAndUpdate(detector: detector)
+            return
+        }
+
         guard state == .notInstalled else { return }
 
         // Only show the dialog once per app version to avoid nagging
@@ -316,6 +326,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         UserDefaults.standard.set(currentVersion, forKey: Self.pluginPromptShownKey)
         showPluginInstallDialog()
+    }
+
+    /// Silently reinstalls the plugin if the installed version doesn't match the bundled version.
+    private func checkPluginVersionAndUpdate(detector: PluginDetector) {
+        guard let bundledVersion = pluginInstaller.bundledPluginVersion,
+              let installedVersion = detector.installedPluginVersion(),
+              bundledVersion != installedVersion else {
+            return
+        }
+
+        // Version mismatch — reinstall silently (uninstall + install)
+        _ = pluginInstaller.uninstall()
+        if let error = pluginInstaller.install() {
+            NSLog("Claude Status: plugin auto-update from %@ to %@ failed: %@",
+                  installedVersion, bundledVersion, error)
+        } else {
+            NSLog("Claude Status: plugin auto-updated from %@ to %@",
+                  installedVersion, bundledVersion)
+            monitor.invalidatePluginCache()
+            monitor.refresh()
+        }
     }
 
     private func showPluginInstallDialog() {

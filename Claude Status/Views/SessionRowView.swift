@@ -33,14 +33,14 @@ struct SessionRowView: View {
                 HStack(spacing: 4) {
                     Text(session.source.label)
                         .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                     if !session.activity.isEmpty {
                         Text("\u{2022}")
                             .font(.system(size: 8))
-                            .foregroundStyle(.quaternary)
+                            .foregroundStyle(.tertiary)
                         Text(session.activity)
                             .font(.system(size: 10))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -49,11 +49,11 @@ struct SessionRowView: View {
 
             Text(session.state.label)
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
 
             Text(session.timeSinceActivity)
                 .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
                 .frame(width: 52, alignment: .trailing)
         }
         .padding(.vertical, 5)

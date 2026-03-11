@@ -18,6 +18,19 @@ struct PluginInstaller {
             .path
     }
 
+    /// Version of the bundled plugin (stamped from MARKETING_VERSION at build time).
+    var bundledPluginVersion: String? {
+        guard let marketplacePath = bundledMarketplacePath else { return nil }
+        let pluginJSON = URL(fileURLWithPath: marketplacePath)
+            .appendingPathComponent("plugins/claude-status/.claude-plugin/plugin.json")
+        guard let data = try? Data(contentsOf: pluginJSON),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let version = json["version"] as? String else {
+            return nil
+        }
+        return version
+    }
+
     /// Resolves the `claude` CLI binary path.
     private var claudePath: String? {
         let candidates = [
@@ -117,14 +130,18 @@ struct PluginInstaller {
         process.standardError = stderrPipe
         process.standardOutput = stdoutPipe
 
-        // Read pipe output asynchronously to prevent deadlock when buffers fill
+        // Read pipe output asynchronously to prevent deadlock when buffers fill.
+        // Use a serial queue to synchronize access to the mutable Data buffers.
+        let pipeQueue = DispatchQueue(label: "com.poisonpenllc.Claude-Status.pipeIO")
         var stderrData = Data()
         var stdoutData = Data()
         stderrPipe.fileHandleForReading.readabilityHandler = { handle in
-            stderrData.append(handle.availableData)
+            let chunk = handle.availableData
+            pipeQueue.sync { stderrData.append(chunk) }
         }
         stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-            stdoutData.append(handle.availableData)
+            let chunk = handle.availableData
+            pipeQueue.sync { stdoutData.append(chunk) }
         }
 
         do {
@@ -153,8 +170,12 @@ struct PluginInstaller {
         // Drain remaining data and clean up handlers
         stderrPipe.fileHandleForReading.readabilityHandler = nil
         stdoutPipe.fileHandleForReading.readabilityHandler = nil
-        stderrData.append(stderrPipe.fileHandleForReading.readDataToEndOfFile())
-        stdoutData.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
+        let remainingStderr = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        let remainingStdout = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        pipeQueue.sync {
+            stderrData.append(remainingStderr)
+            stdoutData.append(remainingStdout)
+        }
 
         if process.terminationStatus != 0 {
             let errorString = String(data: stderrData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""

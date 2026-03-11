@@ -59,7 +59,7 @@ struct MediumWidgetView: View {
                 Divider()
                     .padding(.leading, 32)
             }
-            Link(destination: deepLinkURL(for: session)) {
+            Link(destination: session.deepLinkURL) {
                 SessionRowWidget(session: session)
             }
             .buttonStyle(.plain)
@@ -79,20 +79,7 @@ struct MediumWidgetView: View {
     }
 
     private var sortedSessions: [ClaudeSession] {
-        entry.sessions.sorted {
-            if $0.state.sortOrder != $1.state.sortOrder {
-                return $0.state.sortOrder < $1.state.sortOrder
-            }
-            return $0.lastActivityAt > $1.lastActivityAt
-        }
-    }
-
-    private func deepLinkURL(for session: ClaudeSession) -> URL {
-        var components = URLComponents()
-        components.scheme = "claude-status"
-        components.host = "session"
-        components.path = "/\(session.id)"
-        return components.url ?? URL(string: "claude-status://session/unknown")!
+        entry.sessions.sortedByStateAndActivity
     }
 }
 
@@ -138,7 +125,7 @@ struct LargeWidgetView: View {
                 Divider()
                     .padding(.leading, 32)
             }
-            Link(destination: deepLinkURL(for: session)) {
+            Link(destination: session.deepLinkURL) {
                 SessionRowWidget(session: session)
             }
             .buttonStyle(.plain)
@@ -158,20 +145,7 @@ struct LargeWidgetView: View {
     }
 
     private var sortedSessions: [ClaudeSession] {
-        entry.sessions.sorted {
-            if $0.state.sortOrder != $1.state.sortOrder {
-                return $0.state.sortOrder < $1.state.sortOrder
-            }
-            return $0.lastActivityAt > $1.lastActivityAt
-        }
-    }
-
-    private func deepLinkURL(for session: ClaudeSession) -> URL {
-        var components = URLComponents()
-        components.scheme = "claude-status"
-        components.host = "session"
-        components.path = "/\(session.id)"
-        return components.url ?? URL(string: "claude-status://session/unknown")!
+        entry.sessions.sortedByStateAndActivity
     }
 }
 
