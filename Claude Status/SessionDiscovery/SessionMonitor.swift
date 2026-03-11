@@ -11,6 +11,7 @@ import WidgetKit
 final class SessionMonitor {
 
     private(set) var sessions: [ClaudeSession] = []
+    private(set) var productivityStats: ProductivityStats = .empty()
 
     /// Whether the Claude Code session-status plugin is installed.
     /// Based on `PluginDetector` checking installed_plugins.json and settings.json hooks.
@@ -25,6 +26,7 @@ final class SessionMonitor {
     private var discovery = SessionDiscovery()
     private let stateResolver = StateResolver()
     private let pluginDetector = PluginDetector()
+    private let tracker = ProductivityTracker()
     private var timer: Timer?
     private let scanInterval: TimeInterval
 
@@ -122,6 +124,10 @@ final class SessionMonitor {
         sessions = result.sessions
         cstatusCache = result.cstatusFiles
 
+        // Track time-in-state for productivity scoring
+        tracker.recordSnapshot(sessions: result.sessions)
+        productivityStats = tracker.currentStats
+
         updatePluginState()
 
         if changed {
@@ -167,5 +173,7 @@ final class SessionMonitor {
         try? encoded.write(to: dataURL, options: .atomic)
 
         WidgetCenter.shared.reloadTimelines(ofKind: "Claude_StatusWidget")
+        WidgetCenter.shared.reloadTimelines(ofKind: "Claude_ProductivityWidget")
+        WidgetCenter.shared.reloadTimelines(ofKind: "Claude_ScoreWidget")
     }
 }

@@ -1,8 +1,18 @@
 import WidgetKit
 import SwiftUI
 
-/// The main Claude Status widget displaying Claude Code session information.
+/// Widget bundle containing all Claude Status widgets.
 @main
+@MainActor
+struct ClaudeStatusWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        Claude_StatusWidget()
+        Claude_ProductivityWidget()
+        Claude_ScoreWidget()
+    }
+}
+
+/// The main Claude Status widget displaying Claude Code session information.
 @MainActor
 struct Claude_StatusWidget: Widget {
     let kind: String = "Claude_StatusWidget"
