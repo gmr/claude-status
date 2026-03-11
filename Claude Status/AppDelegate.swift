@@ -336,19 +336,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // Version mismatch — reinstall silently (uninstall + install)
-        if let uninstallError = pluginInstaller.uninstall() {
-            NSLog("Claude Status: plugin uninstall failed during auto-update: %@", uninstallError)
-            return
-        }
-        if let error = pluginInstaller.install() {
-            NSLog("Claude Status: plugin auto-update from %@ to %@ failed: %@",
-                  installedVersion, bundledVersion, error)
-        } else {
-            NSLog("Claude Status: plugin auto-updated from %@ to %@",
-                  installedVersion, bundledVersion)
-            monitor.invalidatePluginCache()
-            monitor.refresh()
+        // Version mismatch — reinstall silently on a background queue
+        // to avoid blocking the main thread with CLI operations
+        let installer = pluginInstaller
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            if let uninstallError = installer.uninstall() {
+                NSLog("Claude Status: plugin uninstall failed during auto-update: %@", uninstallError)
+                return
+            }
+            if let error = installer.install() {
+                NSLog("Claude Status: plugin auto-update from %@ to %@ failed: %@",
+                      installedVersion, bundledVersion, error)
+            } else {
+                NSLog("Claude Status: plugin auto-updated from %@ to %@",
+                      installedVersion, bundledVersion)
+                DispatchQueue.main.async {
+                    self?.monitor.invalidatePluginCache()
+                    self?.monitor.refresh()
+                }
+            }
         }
     }
 

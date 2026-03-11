@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Persisted as `productivity.json` in the shared App Group container so both
 /// the main app and widget extension can read it. Resets daily at midnight.
-struct ProductivityStats: Codable {
+struct ProductivityStats: Codable, Equatable {
     /// The calendar day these stats cover (midnight of the day).
     var date: Date
 
@@ -104,7 +104,7 @@ struct ProductivityStats: Codable {
 }
 
 /// Holds both today's stats and all-time cumulative stats.
-struct ProductivityData: Codable {
+struct ProductivityData: Codable, Equatable {
     var today: ProductivityStats
     var allTime: ProductivityStats
 }

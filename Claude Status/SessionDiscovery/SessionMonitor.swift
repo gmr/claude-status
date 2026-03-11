@@ -38,6 +38,10 @@ final class SessionMonitor {
     private var cachedPluginState: PluginInstallState = .unknown
     private static let pluginCheckInterval: TimeInterval = 30
 
+    /// Throttle widget reloads to avoid excessive writes on every 5s poll.
+    private var lastWidgetUpdate: Date = .distantPast
+    private static let widgetUpdateInterval: TimeInterval = 30
+
     /// Darwin notification name posted by the hook script.
     private static let darwinNotificationName = "com.poisonpenllc.Claude-Status.session-changed" as CFString
 
@@ -127,14 +131,19 @@ final class SessionMonitor {
         // Track time-in-state for productivity scoring
         tracker.recordSnapshot(sessions: result.sessions)
         let newProductivity = tracker.currentData
-        let productivityChanged = newProductivity.today.score != productivityData.today.score
-            || newProductivity.today.totalTrackedTime != productivityData.today.totalTrackedTime
+        let productivityChanged = productivityData != newProductivity
         productivityData = newProductivity
 
         updatePluginState()
 
-        if sessionsChanged || productivityChanged {
+        // Session changes write immediately; productivity changes are throttled
+        if sessionsChanged {
             writeToSharedContainer()
+        } else if productivityChanged {
+            let now = Date()
+            if now.timeIntervalSince(lastWidgetUpdate) >= Self.widgetUpdateInterval {
+                writeToSharedContainer()
+            }
         }
     }
 
@@ -161,6 +170,7 @@ final class SessionMonitor {
     // MARK: - Shared Data
 
     private func writeToSharedContainer() {
+        lastWidgetUpdate = Date()
         guard let sharedURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "group.com.poisonpenllc.Claude-Status"
         ) else {
