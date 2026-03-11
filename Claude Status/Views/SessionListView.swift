@@ -11,6 +11,8 @@ struct SessionListView: View {
     @AppStorage("iconStyle", store: UserDefaults(suiteName: "group.com.poisonpenllc.Claude-Status"))
     private var iconStyle: SessionIconStyle = .emoji
 
+    @State private var isRefreshing = false
+
     private let menuFont = Font.system(size: 13)
 
     /// Sessions sorted by state (Waiting, Active, Compacting, Idle), then time in state desc.
@@ -56,13 +58,31 @@ struct SessionListView: View {
             Text("Claude Status")
                 .font(.system(size: 13, weight: .semibold))
             Spacer()
-            Button(action: { onRefresh?() }) {
+            Button(action: {
+                withAnimation(.linear(duration: 0.5)) {
+                    isRefreshing = true
+                }
+                onRefresh?()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    isRefreshing = false
+                }
+            }) {
                 Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                    .animation(.linear(duration: 0.5), value: isRefreshing)
+            }
+            .buttonStyle(.plain)
+            .help("Refresh")
+
+            Button(action: { onSettings?() }) {
+                Image(systemName: "gearshape")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("Refresh")
+            .help("Settings")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -101,9 +121,6 @@ struct SessionListView: View {
 
     private var menuSection: some View {
         VStack(spacing: 0) {
-            menuButton(action: { onSettings?() }) {
-                Text("Settings\u{2026}")
-            }
             menuButton(action: { onQuit?() }) {
                 Text("Quit")
             }

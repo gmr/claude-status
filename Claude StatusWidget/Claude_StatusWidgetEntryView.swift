@@ -205,10 +205,10 @@ struct SessionRowWidget: View {
             VStack(alignment: .trailing, spacing: 1) {
                 Text(session.state.label)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
                 Text(session.timeSinceActivity)
                     .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.primary)
             }
         }
         .padding(.vertical, 10)
