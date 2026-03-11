@@ -16,10 +16,37 @@ struct SessionEntry: TimelineEntry {
 struct Claude_StatusTimelineProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> SessionEntry {
-        SessionEntry(date: Date(), sessions: [])
+        SessionEntry(date: Date(), sessions: [
+            ClaudeSession(
+                sessionId: "placeholder-1",
+                pid: 0,
+                workingDirectory: "/Users/dev/Projects/Example",
+                projectName: "Example Project",
+                state: .active,
+                lastActivityAt: Date(),
+                iTermSessionId: nil,
+                source: .terminal(app: "Terminal"),
+                activity: "Edit"
+            ),
+            ClaudeSession(
+                sessionId: "placeholder-2",
+                pid: 0,
+                workingDirectory: "/Users/dev/Projects/Another",
+                projectName: "Another Project",
+                state: .waiting,
+                lastActivityAt: Date().addingTimeInterval(-120),
+                iTermSessionId: nil,
+                source: .vscode,
+                activity: ""
+            ),
+        ])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SessionEntry) -> Void) {
+        if context.isPreview {
+            completion(placeholder(in: context))
+            return
+        }
         let sessions = fetchSessions()
         let entry = SessionEntry(date: Date(), sessions: sessions)
         completion(entry)
