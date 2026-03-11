@@ -56,7 +56,7 @@ struct SessionStateTests {
         #expect(twoHoursAgo.timeSinceActivity == "2h ago")
     }
 
-    @Test func sessionCodable() throws {
+    @Test @MainActor func sessionCodable() throws {
         let session = ClaudeSession(
             sessionId: "12345678-1234-1234-1234-123456789abc",
             pid: 12345,
