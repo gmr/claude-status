@@ -56,8 +56,8 @@ enum SessionState: Comparable, Codable {
     /// Priority for aggregate status (higher = more urgent).
     var priority: Int {
         switch self {
-        case .active: 3
-        case .waiting: 2
+        case .waiting: 3
+        case .active: 2
         case .compacting: 1
         case .idle: 0
         }

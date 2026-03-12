@@ -5,8 +5,8 @@ import Testing
 struct SessionStateTests {
 
     @Test func statePriority() {
-        #expect(SessionState.active.priority > SessionState.waiting.priority)
-        #expect(SessionState.waiting.priority > SessionState.idle.priority)
+        #expect(SessionState.waiting.priority > SessionState.active.priority)
+        #expect(SessionState.active.priority > SessionState.idle.priority)
     }
 
     @Test func sfSymbols() {
