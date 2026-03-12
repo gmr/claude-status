@@ -15,19 +15,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
 
     /// Sparkle updater controller for automatic updates.
-    let updaterController: SPUStandardUpdaterController
-
-    /// Shared defaults for the app group (cached to avoid per-tick allocation).
-    private let sharedDefaults = UserDefaults(suiteName: "group.com.poisonpenllc.Claude-Status")
-
-    override init() {
-        updaterController = SPUStandardUpdaterController(
+    /// Lazily initialized — not created during tests or when the EdDSA key is a placeholder.
+    private(set) lazy var updaterController: SPUStandardUpdaterController = {
+        SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
-        super.init()
-    }
+    }()
+
+    /// Shared defaults for the app group (cached to avoid per-tick allocation).
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.poisonpenllc.Claude-Status")
 
     /// Cached state for change detection in status icon updates.
     private var lastRenderedState: SessionState?
@@ -43,6 +41,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupPopover()
         setupURLHandler()
         monitor.start()
+
+        // Touch the updater to trigger lazy init (only runs here, not during tests)
+        _ = updaterController
 
         // Close popover when clicking outside
         eventMonitor = NSEvent.addGlobalMonitorForEvents(

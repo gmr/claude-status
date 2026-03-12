@@ -5,7 +5,7 @@ import SwiftUI
 /// Settings window with icon style, launch at login, and plugin management.
 struct SettingsView: View {
     var pluginState: PluginInstallState
-    var updater: SPUUpdater
+    var updater: SPUUpdater?
     var onInstallPlugin: () -> Void
     var onUninstallPlugin: () -> Void
 
@@ -31,28 +31,30 @@ struct SettingsView: View {
                     }
             }
 
-            Section("Updates") {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Automatic Updates")
-                            .font(.body)
-                        Text("Check for updates daily and install automatically")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            if let updater {
+                Section("Updates") {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Automatic Updates")
+                                .font(.body)
+                            Text("Check for updates daily and install automatically")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Toggle("", isOn: Binding(
+                            get: { updater.automaticallyChecksForUpdates },
+                            set: { updater.automaticallyChecksForUpdates = $0 }
+                        ))
+                        .toggleStyle(.switch)
                     }
-                    Spacer()
-                    Toggle("", isOn: Binding(
-                        get: { updater.automaticallyChecksForUpdates },
-                        set: { updater.automaticallyChecksForUpdates = $0 }
-                    ))
-                    .toggleStyle(.switch)
-                }
-                HStack {
-                    Spacer()
-                    Button("Check for Updates\u{2026}") {
-                        updater.checkForUpdates()
+                    HStack {
+                        Spacer()
+                        Button("Check for Updates\u{2026}") {
+                            updater.checkForUpdates()
+                        }
+                        .disabled(!updater.canCheckForUpdates)
                     }
-                    .disabled(!updater.canCheckForUpdates)
                 }
             }
 
