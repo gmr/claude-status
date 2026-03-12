@@ -15,6 +15,5 @@
     "macos",
     "menu-bar",
     "monitoring"
-  ],
-  "hooks": "./hooks/hooks.json"
+  ]
 }
