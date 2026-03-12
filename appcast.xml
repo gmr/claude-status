@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Claude Status</title>
+        <item>
+            <title>1.1.5</title>
+            <pubDate>Thu, 12 Mar 2026 22:33:32 +0000</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.1.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/gmr/claude-status/releases/download/1.1.5/Claude-Status-1.1.5.zip" length="3765860" type="application/octet-stream" sparkle:edSignature="WlHDmYSdEm9oCkcoJHNaZs7oCDC6bujjfJj9c+E7aofvzIoM1i8wr9ZJgMiotjWgcN0G+sONZVTmZG+fzJOwDQ=="/>
+        </item>
+    </channel>
+</rss>
