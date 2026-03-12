@@ -58,7 +58,8 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.DEVELOPMENT_TEAM }}" \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="" \
-            SPARKLE_ED_KEY="${{ secrets.SPARKLE_ED_PUBLIC_KEY }}"
+            SPARKLE_ED_KEY="${{ secrets.SPARKLE_ED_PUBLIC_KEY }}" \
+            ROLLBAR_ACCESS_TOKEN="${{ secrets.ROLLBAR_ACCESS_TOKEN }}"
 
       - name: Notarize app
         env:
@@ -110,6 +111,26 @@ jobs:
             --team-id "$APPLE_TEAM_ID" \
             --wait
           xcrun stapler staple "${{ steps.pkg.outputs.pkg_name }}"
+
+      - name: Upload dSYMs to Rollbar
+        if: "${{ secrets.ROLLBAR_ACCESS_TOKEN != '' }}"
+        run: |
+          DSYM_PATH="DerivedData/Build/Products/Release/Claude Status.app.dSYM"
+          if [ -d "$DSYM_PATH" ]; then
+            zip -r dsyms.zip "$DSYM_PATH"
+            curl -X POST https://api.rollbar.com/api/1/dsym \
+              -F "dsym=@dsyms.zip" \
+              -H "X-Rollbar-Access-Token: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}"
+            rm dsyms.zip
+          fi
+
+      - name: Notify Rollbar of deploy
+        if: "${{ secrets.ROLLBAR_ACCESS_TOKEN != '' }}"
+        run: |
+          curl -X POST https://api.rollbar.com/api/1/deploy \
+            -H "X-Rollbar-Access-Token: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"environment\": \"production\", \"revision\": \"${{ github.sha }}\", \"local_username\": \"github-actions\", \"rollbar_username\": \"github-actions\", \"comment\": \"Release ${{ github.event.release.tag_name }}\"}"
 
       - name: Upload release assets
         env:

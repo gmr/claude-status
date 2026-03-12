@@ -23,7 +23,8 @@ jobs:
             -destination "platform=macOS" \
             MACOSX_DEPLOYMENT_TARGET=15.0 \
             CODE_SIGN_IDENTITY=- \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            ROLLBAR_ACCESS_TOKEN="${{ secrets.ROLLBAR_ACCESS_TOKEN }}"
 
   test:
     name: Test
@@ -42,4 +43,5 @@ jobs:
             -only-testing:"Claude StatusTests" \
             MACOSX_DEPLOYMENT_TARGET=15.0 \
             CODE_SIGN_IDENTITY=- \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            ROLLBAR_ACCESS_TOKEN="${{ secrets.ROLLBAR_ACCESS_TOKEN }}"

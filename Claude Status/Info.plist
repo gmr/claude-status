@@ -26,6 +26,8 @@
 	<string>https://gmr.github.io/claude-status/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>GEGFuxGxuQ+DuaeSxnImzTWngxKYgK7froTxTOOA8X8=</string>
+	<key>RollbarAccessToken</key>
+	<string>$(ROLLBAR_ACCESS_TOKEN)</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUScheduledCheckInterval</key>

@@ -65,9 +65,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupRollbar() {
-        let config = RollbarConfig.mutableConfig(
-            withAccessToken: "6f3ae0da769b4fac885b5f9dc18e17c4"
-        )
+        guard let token = Bundle.main.object(forInfoDictionaryKey: "RollbarAccessToken") as? String,
+              !token.isEmpty else {
+            return
+        }
+        let config = RollbarConfig.mutableConfig(withAccessToken: token)
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
         config.setServerHost(nil, root: nil, branch: nil, codeVersion: version)
         Rollbar.initWithConfiguration(config)
