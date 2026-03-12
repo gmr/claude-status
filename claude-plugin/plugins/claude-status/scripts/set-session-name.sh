@@ -28,7 +28,7 @@ find_cstatus_for_pid() {
     local pid="$1"
     for cstatus_file in "${PROJECTS_DIR}"/*/*.cstatus; do
         [[ -f "$cstatus_file" ]] || continue
-        if grep -q "\"pid\":${pid}" "$cstatus_file" 2>/dev/null; then
+        if grep -Eq "\"pid\":[[:space:]]*${pid}([[:space:]]*[,}])" "$cstatus_file" 2>/dev/null; then
             echo "$cstatus_file"
             return 0
         fi
@@ -53,9 +53,40 @@ fi
 CURRENT=$(cat "$CSTATUS_FILE")
 SAFE_NAME=$(json_escape "$SESSION_NAME")
 
-# Remove existing session_name field if present, then append the new one
-# before the closing brace.
-UPDATED=$(echo "$CURRENT" | sed -e 's/,"session_name":"[^"]*"//' -e "s/}$/,\"session_name\":\"${SAFE_NAME}\"}/")
+# Use awk to safely remove any existing session_name field (handling escaped
+# quotes in its value) and append the new one before the closing brace.
+# Pass SAFE_NAME via ENVIRON to avoid awk -v interpreting backslash escapes.
+export SAFE_NAME
+UPDATED=$(printf '%s' "$CURRENT" | awk '
+{
+    name = ENVIRON["SAFE_NAME"]
+    key = "\"session_name\""
+    idx = index($0, key)
+    if (idx > 0) {
+        pre_start = idx
+        if (pre_start > 1 && substr($0, pre_start - 1, 1) == ",") pre_start--
+        rest = substr($0, idx + length(key))
+        gsub(/^[[:space:]]*:[[:space:]]*/, "", rest)
+        if (substr(rest, 1, 1) == "\"") {
+            rest = substr(rest, 2)
+            while (length(rest) > 0) {
+                c = substr(rest, 1, 1)
+                if (c == "\\") { rest = substr(rest, 3) }
+                else if (c == "\"") { rest = substr(rest, 2); break }
+                else { rest = substr(rest, 2) }
+            }
+        }
+        line = substr($0, 1, pre_start - 1) rest
+    } else {
+        line = $0
+    }
+    brace = index(line, "}")
+    if (brace > 0) {
+        printf "%s,\"session_name\":\"%s\"}", substr(line, 1, brace - 1), name
+    } else {
+        print line
+    }
+}')
 
 # Write atomically
 TMP_FILE="${CSTATUS_FILE}.tmp.$$"

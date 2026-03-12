@@ -1,20 +1,60 @@
 #!/bin/bash
 # Shared JSON utilities for Claude Status plugin scripts.
-# No external dependencies — uses only bash builtins and sed.
+# No external dependencies — uses only bash builtins and awk.
 
 # Escape a string for safe interpolation into JSON string values.
-# Handles backslash, double quote, and control characters.
+# Handles backslash, double quote, tab, newline, and carriage return.
 json_escape() {
-    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g'
+    printf '%s' "$1" | awk -v RS='' '
+    {
+        result = ""
+        for (i = 1; i <= length($0); i++) {
+            c = substr($0, i, 1)
+            if (c == "\\") result = result "\\\\"
+            else if (c == "\"") result = result "\\\""
+            else if (c == "\t") result = result "\\t"
+            else if (c == "\n") result = result "\\n"
+            else if (c == "\r") result = result "\\r"
+            else result = result c
+        }
+        printf "%s", result
+    }'
 }
 
-# Extract a string value from JSON using only sed (no jq dependency).
-# Returns empty string (not failure) when key is absent.
+# Extract a string value from JSON using awk.
+# Handles escaped quotes within values and unescapes the result so that
+# json_escape(extract_json_string(...)) round-trips correctly.
+# Returns empty string when key is absent.
 extract_json_string() {
     local key="$1"
     local json="$2"
     local result
-    result=$(echo "$json" | sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p") || true
-    echo "${result%%
-*}"
+    result=$(printf '%s' "$json" | awk -v key="\"${key}\"" '
+    {
+        idx = index($0, key)
+        if (idx == 0) next
+        rest = substr($0, idx + length(key))
+        gsub(/^[[:space:]]*:[[:space:]]*/, "", rest)
+        if (substr(rest, 1, 1) != "\"") next
+        rest = substr(rest, 2)
+        val = ""
+        while (length(rest) > 0) {
+            c = substr(rest, 1, 1)
+            if (c == "\\") {
+                nc = substr(rest, 2, 1)
+                if (nc == "n") val = val "\n"
+                else if (nc == "t") val = val "\t"
+                else if (nc == "r") val = val "\r"
+                else val = val nc
+                rest = substr(rest, 3)
+            } else if (c == "\"") {
+                print val
+                exit
+            } else {
+                val = val c
+                rest = substr(rest, 2)
+            }
+        }
+    }') || true
+    echo "$result"
 }

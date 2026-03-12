@@ -13,7 +13,7 @@ Sets a custom display name for the current Claude Code session in the Claude Sta
 
 ## Usage
 
-```
+```text
 /name-session <name>
 ```
 

@@ -45,7 +45,7 @@ struct Claude_StatusWidget: Widget {
             tmuxSocket: nil,
             source: .terminal(app: "iTerm2"),
             activity: "Edit",
-            sessionName: nil
+            sessionName: "API Refactor"
         ),
         ClaudeSession(
             sessionId: "preview-2",
@@ -80,7 +80,7 @@ struct Claude_StatusWidget: Widget {
             tmuxSocket: nil,
             source: .terminal(app: "iTerm2"),
             activity: "Edit",
-            sessionName: nil
+            sessionName: "API Refactor"
         ),
         ClaudeSession(
             sessionId: "preview-2",
