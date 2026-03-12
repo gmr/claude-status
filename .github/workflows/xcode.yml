@@ -39,6 +39,7 @@ jobs:
             -project "Claude Status.xcodeproj" \
             -scheme "Claude Status" \
             -destination "platform=macOS" \
+            -only-testing:"Claude StatusTests" \
             MACOSX_DEPLOYMENT_TARGET=15.0 \
             CODE_SIGN_IDENTITY=- \
             CODE_SIGNING_ALLOWED=NO

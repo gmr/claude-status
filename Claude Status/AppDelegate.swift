@@ -22,6 +22,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastRenderedIconStyle: SessionIconStyle?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Skip UI setup when running under XCTest to avoid blocking the test runner
+        guard !isRunningTests else { return }
+
         setupMainMenu()
         setupStatusItem()
         setupPopover()
@@ -39,6 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             self?.checkPluginInstallation()
         }
+    }
+
+    private var isRunningTests: Bool {
+        NSClassFromString("XCTestCase") != nil || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
     private func setupMainMenu() {
