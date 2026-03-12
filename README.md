@@ -8,7 +8,7 @@ A native macOS menu bar app that monitors all your [Claude Code](https://docs.an
 
 ![Claude Status screenshot showing the menu bar dropdown and desktop widgets](assets/screenshot.png)
 
-[⬇️ Download Latest Version](https://github.com/gmr/claude-status/releases/download/1.1.5/Claude-Status-1.1.5.pkg)
+[Download Latest Version](https://github.com/gmr/claude-status/releases/download/1.1.5/Claude-Status-1.1.5.pkg)
 
 ## Features
 
