@@ -40,27 +40,72 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
           rm "$RUNNER_TEMP/cert.p12"
 
+      - name: Install provisioning profiles
+        env:
+          PROVISIONING_PROFILE_APP: ${{ secrets.PROVISIONING_PROFILE_APP }}
+          PROVISIONING_PROFILE_WIDGET: ${{ secrets.PROVISIONING_PROFILE_WIDGET }}
+        run: |
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$PROVISIONING_PROFILE_APP" | base64 --decode \
+            -o "$HOME/Library/MobileDevice/Provisioning Profiles/app.provisionprofile"
+          echo "$PROVISIONING_PROFILE_WIDGET" | base64 --decode \
+            -o "$HOME/Library/MobileDevice/Provisioning Profiles/widget.provisionprofile"
+
       - name: Resolve Sparkle packages
         run: |
           xcodebuild -resolvePackageDependencies \
             -project "Claude Status.xcodeproj" \
             -scheme "Claude Status"
 
-      - name: Build Release
+      - name: Extract provisioning profile names
+        id: profiles
         run: |
-          xcodebuild clean build \
+          APP_PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /dev/stdin <<< \
+            "$(/usr/bin/security cms -D -i "$HOME/Library/MobileDevice/Provisioning Profiles/app.provisionprofile")")
+          WIDGET_PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /dev/stdin <<< \
+            "$(/usr/bin/security cms -D -i "$HOME/Library/MobileDevice/Provisioning Profiles/widget.provisionprofile")")
+          echo "app_name=$APP_PROFILE_NAME" >> "$GITHUB_OUTPUT"
+          echo "widget_name=$WIDGET_PROFILE_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Build archive
+        run: |
+          xcodebuild clean archive \
             -project "Claude Status.xcodeproj" \
             -scheme "Claude Status" \
             -configuration Release \
-            -derivedDataPath DerivedData \
+            -archivePath DerivedData/Claude-Status.xcarchive \
             -destination "platform=macOS" \
-            CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
-            DEVELOPMENT_TEAM="${{ secrets.DEVELOPMENT_TEAM }}" \
-            CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="" \
+            -skipPackageSignature \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             SPARKLE_ED_KEY="${{ secrets.SPARKLE_ED_PUBLIC_KEY }}" \
             ROLLBAR_ACCESS_TOKEN="${{ secrets.ROLLBAR_ACCESS_TOKEN }}" \
-            MARKETING_VERSION="${{ github.event.release.tag_name }}"
+            MARKETING_VERSION="${{ github.event.release.tag_name }}" \
+            MACOSX_DEPLOYMENT_TARGET=15.0
+
+      - name: Create export options
+        env:
+          TEAM_ID: ${{ secrets.DEVELOPMENT_TEAM }}
+          SIGN_IDENTITY: ${{ secrets.CODE_SIGN_IDENTITY }}
+          APP_PROFILE: ${{ steps.profiles.outputs.app_name }}
+          WIDGET_PROFILE: ${{ steps.profiles.outputs.widget_name }}
+        run: |
+          /usr/libexec/PlistBuddy -c "Clear dict" ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :method string developer-id" ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :teamID string $TEAM_ID" ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :signingStyle string manual" ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :signingCertificate string $SIGN_IDENTITY" ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles dict" ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.poisonpenllc.Claude-Status string $APP_PROFILE" ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.poisonpenllc.Claude-Status.widget string $WIDGET_PROFILE" ExportOptions.plist
+
+      - name: Export archive
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath DerivedData/Claude-Status.xcarchive \
+            -exportPath DerivedData/Export \
+            -exportOptionsPlist ExportOptions.plist
 
       - name: Notarize app
         env:
@@ -68,7 +113,7 @@ jobs:
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
-          APP_PATH="DerivedData/Build/Products/Release/Claude Status.app"
+          APP_PATH="DerivedData/Export/Claude Status.app"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" notarize.zip
           xcrun notarytool submit notarize.zip \
             --apple-id "$APPLE_ID" \
@@ -81,7 +126,7 @@ jobs:
       - name: Package app
         id: package
         run: |
-          APP_PATH="DerivedData/Build/Products/Release/Claude Status.app"
+          APP_PATH="DerivedData/Export/Claude Status.app"
           ZIP_NAME="Claude-Status-${{ github.event.release.tag_name }}.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_NAME"
           echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
@@ -89,7 +134,7 @@ jobs:
       - name: Build installer pkg
         id: pkg
         run: |
-          APP_PATH="DerivedData/Build/Products/Release/Claude Status.app"
+          APP_PATH="DerivedData/Export/Claude Status.app"
           PKG_NAME="Claude-Status-${{ github.event.release.tag_name }}.pkg"
           pkgbuild \
             --component "$APP_PATH" \
@@ -118,7 +163,7 @@ jobs:
         env:
           ROLLBAR_DSYM_TOKEN: ${{ secrets.ROLLBAR_DSYM_TOKEN }}
         run: |
-          DSYM_PATH="DerivedData/Build/Products/Release/Claude Status.app.dSYM"
+          DSYM_PATH="DerivedData/Claude-Status.xcarchive/dSYMs/Claude Status.app.dSYM"
           if [ -d "$DSYM_PATH" ]; then
             zip -r dsyms.zip "$DSYM_PATH"
             curl -X POST https://api.rollbar.com/api/1/dsym \
