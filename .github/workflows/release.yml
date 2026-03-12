@@ -113,22 +113,22 @@ jobs:
           xcrun stapler staple "${{ steps.pkg.outputs.pkg_name }}"
 
       - name: Upload dSYMs to Rollbar
-        if: "${{ secrets.ROLLBAR_ACCESS_TOKEN != '' }}"
+        if: "${{ secrets.ROLLBAR_DSYM_TOKEN != '' }}"
         run: |
           DSYM_PATH="DerivedData/Build/Products/Release/Claude Status.app.dSYM"
           if [ -d "$DSYM_PATH" ]; then
             zip -r dsyms.zip "$DSYM_PATH"
             curl -X POST https://api.rollbar.com/api/1/dsym \
               -F "dsym=@dsyms.zip" \
-              -H "X-Rollbar-Access-Token: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}"
+              -H "X-Rollbar-Access-Token: ${{ secrets.ROLLBAR_DSYM_TOKEN }}"
             rm dsyms.zip
           fi
 
       - name: Notify Rollbar of deploy
-        if: "${{ secrets.ROLLBAR_ACCESS_TOKEN != '' }}"
+        if: "${{ secrets.ROLLBAR_DSYM_TOKEN != '' }}"
         run: |
           curl -X POST https://api.rollbar.com/api/1/deploy \
-            -H "X-Rollbar-Access-Token: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}" \
+            -H "X-Rollbar-Access-Token: ${{ secrets.ROLLBAR_DSYM_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{\"environment\": \"production\", \"revision\": \"${{ github.sha }}\", \"local_username\": \"github-actions\", \"rollbar_username\": \"github-actions\", \"comment\": \"Release ${{ github.event.release.tag_name }}\"}"
 
