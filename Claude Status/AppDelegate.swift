@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 import SwiftUI
 
 /// App delegate managing the menu bar status item and popover.
@@ -13,8 +14,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var eventMonitor: Any?
     private var settingsWindow: NSWindow?
 
+    /// Sparkle updater controller for automatic updates.
+    let updaterController: SPUStandardUpdaterController
+
     /// Shared defaults for the app group (cached to avoid per-tick allocation).
     private let sharedDefaults = UserDefaults(suiteName: "group.com.poisonpenllc.Claude-Status")
+
+    override init() {
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+        super.init()
+    }
 
     /// Cached state for change detection in status icon updates.
     private var lastRenderedState: SessionState?
@@ -431,6 +444,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let pluginState = PluginDetector().detect()
         let settingsView = SettingsView(
             pluginState: pluginState,
+            updater: updaterController.updater,
             onInstallPlugin: { [weak self] in
                 self?.performPluginInstall()
                 // Reopen settings to reflect new state

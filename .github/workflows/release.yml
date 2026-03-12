@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build & Notarize
+    runs-on: macos-latest
+    outputs:
+      zip_name: ${{ steps.package.outputs.zip_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve Sparkle packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project "Claude Status.xcodeproj" \
+            -scheme "Claude Status"
+
+      - name: Build Release
+        run: |
+          xcodebuild clean build \
+            -project "Claude Status.xcodeproj" \
+            -scheme "Claude Status" \
+            -configuration Release \
+            -derivedDataPath DerivedData \
+            -destination "platform=macOS" \
+            CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
+            DEVELOPMENT_TEAM="${{ secrets.DEVELOPMENT_TEAM }}" \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Package app
+        id: package
+        run: |
+          APP_PATH="DerivedData/Build/Products/Release/Claude Status.app"
+          ZIP_NAME="Claude-Status-${{ github.event.release.tag_name }}.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_NAME"
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "${{ steps.package.outputs.zip_name }}"
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-zip
+          path: ${{ steps.package.outputs.zip_name }}
+
+  appcast:
+    name: Update Appcast
+    needs: build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Download zip artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-zip
+
+      - name: Download Sparkle
+        run: |
+          SPARKLE_VERSION="2.7.0"
+          curl -sL "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz" -o sparkle.tar.xz
+          mkdir sparkle
+          tar -xf sparkle.tar.xz -C sparkle
+
+      - name: Generate appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          mkdir -p releases
+          mv "${{ needs.build.outputs.zip_name }}" releases/
+
+          # Write release notes from GitHub release body
+          RELEASE_NOTES="${{ github.event.release.body }}"
+          TAG="${{ github.event.release.tag_name }}"
+
+          echo "$SPARKLE_PRIVATE_KEY" | ./sparkle/bin/generate_appcast \
+            --ed-key-file - \
+            --download-url-prefix "https://github.com/gmr/claude-status/releases/download/${TAG}/" \
+            releases/
+
+          # Move generated appcast to root for GitHub Pages
+          if [ -f releases/appcast.xml ]; then
+            cp releases/appcast.xml appcast.xml
+          fi
+
+      - name: Commit and push appcast
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git diff --cached --quiet || git commit -m "Update appcast for ${{ github.event.release.tag_name }}"
+          git push
