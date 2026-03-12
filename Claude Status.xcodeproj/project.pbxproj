@@ -177,6 +177,7 @@
 			);
 			name = "Claude Status";
 			packageProductDependencies = (
+				C3RB00022F700000001D617B /* RollbarNotifier */,
 				C3SP00022F700000001D617B /* Sparkle */,
 			);
 			productName = "Claude Status";
@@ -262,6 +263,7 @@
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
 			packageReferences = (
+				C3RB00012F700000001D617B /* XCRemoteSwiftPackageReference "rollbar-apple" */,
 				C3SP00012F700000001D617B /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = C34C64392F60BDA1001D617B /* Products */;
@@ -729,6 +731,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		C3RB00012F700000001D617B /* XCRemoteSwiftPackageReference "rollbar-apple" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rollbar/rollbar-apple";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
 		C3SP00012F700000001D617B /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
@@ -740,6 +750,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C3RB00022F700000001D617B /* RollbarNotifier */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3RB00012F700000001D617B /* XCRemoteSwiftPackageReference "rollbar-apple" */;
+			productName = RollbarNotifier;
+		};
 		C3SP00022F700000001D617B /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C3SP00012F700000001D617B /* XCRemoteSwiftPackageReference "Sparkle" */;

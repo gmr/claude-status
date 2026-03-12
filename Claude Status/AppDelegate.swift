@@ -1,4 +1,5 @@
 import AppKit
+import RollbarNotifier
 import Sparkle
 import SwiftUI
 
@@ -33,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Skip UI setup when running under XCTest to avoid blocking the test runner
         guard !isRunningTests else { return }
 
+        setupRollbar()
         setupMainMenu()
         setupStatusItem()
         setupPopover()
@@ -60,6 +62,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             self?.checkPluginInstallation()
         }
+    }
+
+    private func setupRollbar() {
+        let config = RollbarConfig.mutableConfig(
+            withAccessToken: "6f3ae0da769b4fac885b5f9dc18e17c4"
+        )
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+        config.setServerHost(nil, root: nil, branch: nil, codeVersion: version)
+        Rollbar.initWithConfiguration(config)
     }
 
     private var isRunningTests: Bool {
