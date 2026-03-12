@@ -11,6 +11,7 @@ struct CStatusRecord {
     let timestamp: Date
     let cwd: String
     let event: String
+    let sessionName: String?
     let fileURL: URL
     /// The encoded project directory name (parent of the .cstatus file).
     let projectDir: URL
@@ -157,6 +158,7 @@ struct SessionDiscovery {
 
         let cwd = json["cwd"] as? String ?? ""
         let event = json["event"] as? String ?? ""
+        let sessionName = json["session_name"] as? String
 
         return CStatusRecord(
             sessionId: sessionId,
@@ -167,6 +169,7 @@ struct SessionDiscovery {
             timestamp: timestamp,
             cwd: cwd,
             event: event,
+            sessionName: sessionName,
             fileURL: url,
             projectDir: url.deletingLastPathComponent()
         )
@@ -217,7 +220,8 @@ struct SessionDiscovery {
             tmuxPaneId: tmuxPaneId,
             tmuxSocket: tmuxSocket,
             source: source,
-            activity: record.activity
+            activity: record.activity,
+            sessionName: record.sessionName
         )
     }
 

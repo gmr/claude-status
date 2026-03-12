@@ -170,11 +170,19 @@ struct SessionRowWidget: View {
                 .frame(width: 22, alignment: .center)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(session.projectName)
+                Text(session.sessionName ?? session.projectName)
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
 
                 HStack(spacing: 3) {
+                    if session.sessionName != nil {
+                        Text(session.projectName)
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        Text("\u{2022}")
+                            .font(.system(size: 7))
+                            .foregroundStyle(.quaternary)
+                    }
                     Text(session.source.label)
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)

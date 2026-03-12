@@ -16,6 +16,7 @@ A native macOS menu bar utility that monitors all active [Claude Code](https://d
 - **Multi-app focus** — Click any session in the dropdown or widget to focus its host app (see [Session Focusing](#session-focusing) for details)
 - **Two icon styles** — Toggle between emoji indicators (⚡ ⏳ 🧹 💤) and colored status dots
 - **Desktop widget** — WidgetKit widget showing session count and status at a glance
+- **Custom session names** — Name sessions via the `/name-session` slash command; names persist across status updates and display in the menu bar and widget
 - **Settings window** — Icon style, launch at login, plugin install/uninstall
 - **Deep linking** — `claude-status://session/<id>` URLs for widget-to-app navigation
 
@@ -57,6 +58,16 @@ Three complementary mechanisms keep the UI current:
 1. **Darwin notifications** — Instant push from the hook script via `notifyutil -p`
 2. **File system watching** — `DispatchSource` on `~/.claude/projects/` triggers refresh on file changes
 3. **Polling timer** — 5s fallback for sessions without hooks
+
+### Session Naming
+
+The plugin includes a `/name-session` skill that lets you set a custom display name for the current Claude Code session. When set, the session name replaces the project directory name as the primary label in both the menu bar dropdown and the desktop widget, with the project name shown in the subtitle.
+
+```text
+/name-session API Refactor
+```
+
+The name is stored in the session's `.cstatus` file as a `session_name` field. The hook script carries it forward across status updates automatically. The name persists for the lifetime of the session.
 
 ### Session Focusing
 

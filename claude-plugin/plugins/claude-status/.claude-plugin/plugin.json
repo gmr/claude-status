@@ -15,5 +15,8 @@
     "macos",
     "menu-bar",
     "monitoring"
+  ],
+  "skills": [
+    "./skills/session-name"
   ]
 }

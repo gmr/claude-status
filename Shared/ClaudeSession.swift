@@ -124,6 +124,8 @@ struct ClaudeSession: Identifiable, Codable, Equatable {
     /// Current activity description (e.g. tool name, "thinking", "subagent").
     /// Empty string when no specific activity is known.
     let activity: String
+    /// Optional custom session name set by the user via /name-session.
+    let sessionName: String?
 
     /// Use sessionId as the SwiftUI identity (stable, unlike PIDs).
     var id: String { sessionId }

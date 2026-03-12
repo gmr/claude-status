@@ -27,7 +27,8 @@ struct SessionStateTests {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .terminal(app: "Terminal"),
-            activity: "Read"
+            activity: "Read",
+            sessionName: nil
         )
         #expect(recent.timeSinceActivity == "just now")
 
@@ -42,7 +43,8 @@ struct SessionStateTests {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .terminal(app: "Terminal"),
-            activity: "Bash"
+            activity: "Bash",
+            sessionName: nil
         )
         #expect(fiveMinAgo.timeSinceActivity == "5m ago")
 
@@ -57,7 +59,8 @@ struct SessionStateTests {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .terminal(app: "Terminal"),
-            activity: ""
+            activity: "",
+            sessionName: nil
         )
         #expect(twoHoursAgo.timeSinceActivity == "2h ago")
     }
@@ -74,7 +77,8 @@ struct SessionStateTests {
             tmuxPaneId: "%5",
             tmuxSocket: "/tmp/tmux-501/default",
             source: .terminal(app: "iTerm2"),
-            activity: "thinking"
+            activity: "thinking",
+            sessionName: "Debug Sprint"
         )
 
         let encoded = try JSONEncoder().encode(session)
@@ -90,6 +94,31 @@ struct SessionStateTests {
         #expect(decoded.tmuxSocket == "/tmp/tmux-501/default")
         #expect(decoded.source == session.source)
         #expect(decoded.activity == session.activity)
+        #expect(decoded.sessionName == "Debug Sprint")
+    }
+
+    @Test @MainActor func sessionCodableWithName() throws {
+        let session = ClaudeSession(
+            sessionId: "12345678-1234-1234-1234-123456789abc",
+            pid: 12345,
+            workingDirectory: "/Users/test/Project",
+            projectName: "Project",
+            state: .active,
+            lastActivityAt: Date(),
+            iTermSessionId: nil,
+            tmuxPaneId: nil,
+            tmuxSocket: nil,
+            source: .terminal(app: "Terminal"),
+            activity: "Edit",
+            sessionName: "API Refactor"
+        )
+
+        let encoded = try JSONEncoder().encode(session)
+        let decoded = try JSONDecoder().decode(ClaudeSession.self, from: encoded)
+
+        #expect(decoded.sessionName == "API Refactor")
+        #expect(decoded.sessionId == session.sessionId)
+        #expect(decoded.state == session.state)
     }
 }
 

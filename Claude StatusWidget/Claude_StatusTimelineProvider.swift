@@ -28,7 +28,8 @@ struct Claude_StatusTimelineProvider: TimelineProvider {
                 tmuxPaneId: nil,
                 tmuxSocket: nil,
                 source: .terminal(app: "Terminal"),
-                activity: "Edit"
+                activity: "Edit",
+                sessionName: nil
             ),
             ClaudeSession(
                 sessionId: "placeholder-2",
@@ -41,7 +42,8 @@ struct Claude_StatusTimelineProvider: TimelineProvider {
                 tmuxPaneId: nil,
                 tmuxSocket: nil,
                 source: .vscode,
-                activity: ""
+                activity: "",
+                sessionName: nil
             ),
         ])
     }

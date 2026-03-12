@@ -44,7 +44,8 @@ struct Claude_StatusWidget: Widget {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .terminal(app: "iTerm2"),
-            activity: "Edit"
+            activity: "Edit",
+            sessionName: "API Refactor"
         ),
         ClaudeSession(
             sessionId: "preview-2",
@@ -57,7 +58,8 @@ struct Claude_StatusWidget: Widget {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .vscode,
-            activity: ""
+            activity: "",
+            sessionName: nil
         ),
     ])
 }
@@ -77,7 +79,8 @@ struct Claude_StatusWidget: Widget {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .terminal(app: "iTerm2"),
-            activity: "Edit"
+            activity: "Edit",
+            sessionName: "API Refactor"
         ),
         ClaudeSession(
             sessionId: "preview-2",
@@ -90,7 +93,8 @@ struct Claude_StatusWidget: Widget {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .vscode,
-            activity: ""
+            activity: "",
+            sessionName: nil
         ),
         ClaudeSession(
             sessionId: "preview-3",
@@ -103,7 +107,8 @@ struct Claude_StatusWidget: Widget {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .terminal(app: "Ghostty"),
-            activity: "Bash"
+            activity: "Bash",
+            sessionName: nil
         ),
         ClaudeSession(
             sessionId: "preview-4",
@@ -116,7 +121,8 @@ struct Claude_StatusWidget: Widget {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .terminal(app: "Terminal"),
-            activity: ""
+            activity: "",
+            sessionName: nil
         ),
         ClaudeSession(
             sessionId: "preview-5",
@@ -129,7 +135,8 @@ struct Claude_StatusWidget: Widget {
             tmuxPaneId: nil,
             tmuxSocket: nil,
             source: .jetbrains(ide: "IntelliJ"),
-            activity: ""
+            activity: "",
+            sessionName: nil
         ),
     ])
 }

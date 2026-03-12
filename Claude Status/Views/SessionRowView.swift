@@ -26,11 +26,19 @@ struct SessionRowView: View {
                 .frame(width: 16, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(session.projectName)
+                Text(session.sessionName ?? session.projectName)
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
 
                 HStack(spacing: 4) {
+                    if session.sessionName != nil {
+                        Text(session.projectName)
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        Text("\u{2022}")
+                            .font(.system(size: 8))
+                            .foregroundStyle(.tertiary)
+                    }
                     Text(session.source.label)
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)

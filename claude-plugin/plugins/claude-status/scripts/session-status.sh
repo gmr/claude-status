@@ -17,25 +17,11 @@
 
 set -eo pipefail
 
+# shellcheck source=lib/json-utils.sh
+source "${BASH_SOURCE%/*}/lib/json-utils.sh"
+
 # Read JSON input from stdin
 INPUT=$(cat)
-
-# Escape a string for safe interpolation into JSON string values.
-# Handles backslash, double quote, and control characters.
-json_escape() {
-    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g'
-}
-
-# Extract a string value from JSON using only sed (no jq dependency).
-# Returns empty string (not failure) when key is absent.
-extract_json_string() {
-    local key="$1"
-    local json="$2"
-    local result
-    result=$(echo "$json" | sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p") || true
-    echo "${result%%
-*}"
-}
 
 EVENT=$(extract_json_string "hook_event_name" "$INPUT")
 SESSION_ID=$(extract_json_string "session_id" "$INPUT")
@@ -69,13 +55,16 @@ fi
 # Extract tool_name for tool-related events
 TOOL_NAME=$(extract_json_string "tool_name" "$INPUT")
 
-# Read the previous state from the existing .cstatus file (if any).
+# Read the previous state and session name from the existing .cstatus file (if any).
 # During compaction, tool-use hooks fire but should not override the
 # "compacting" state — only definitive end events (Stop, UserPromptSubmit,
 # SessionStart, SessionEnd) clear it.
 PREV_STATE=""
+SESSION_NAME=""
 if [[ -f "$STATUS_FILE" ]]; then
-    PREV_STATE=$(extract_json_string "state" "$(cat "$STATUS_FILE")")
+    PREV_CSTATUS=$(cat "$STATUS_FILE")
+    PREV_STATE=$(extract_json_string "state" "$PREV_CSTATUS")
+    SESSION_NAME=$(extract_json_string "session_name" "$PREV_CSTATUS")
 fi
 
 # Map hook event to session state and activity
@@ -158,13 +147,18 @@ SAFE_SESSION_ID=$(json_escape "$SESSION_ID")
 SAFE_ACTIVITY=$(json_escape "$ACTIVITY")
 SAFE_CWD=$(json_escape "$CWD")
 SAFE_EVENT=$(json_escape "$EVENT")
+# Build optional session_name JSON fragment
+SESSION_NAME_JSON=""
+if [[ -n "$SESSION_NAME" ]]; then
+    SESSION_NAME_JSON=",\"session_name\":\"$(json_escape "$SESSION_NAME")\""
+fi
 
 # Write atomically: temp file then move (prevents partial reads)
 TMP_FILE="${STATUS_FILE}.tmp.$$"
 trap 'rm -f "$TMP_FILE"' EXIT
 
 cat > "$TMP_FILE" << EOF
-{"session_id":"${SAFE_SESSION_ID}","pid":${CLAUDE_PID:-0},"ppid":${CLAUDE_PPID:-0},"state":"${STATUS}","activity":"${SAFE_ACTIVITY}","timestamp":"${TIMESTAMP}","cwd":"${SAFE_CWD}","event":"${SAFE_EVENT}"}
+{"session_id":"${SAFE_SESSION_ID}","pid":${CLAUDE_PID:-0},"ppid":${CLAUDE_PPID:-0},"state":"${STATUS}","activity":"${SAFE_ACTIVITY}","timestamp":"${TIMESTAMP}","cwd":"${SAFE_CWD}","event":"${SAFE_EVENT}"${SESSION_NAME_JSON}}
 EOF
 
 mv -f "$TMP_FILE" "$STATUS_FILE"
