@@ -15,14 +15,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
 
     /// Sparkle updater controller for automatic updates.
-    /// Lazily initialized — not created during tests or when the EdDSA key is a placeholder.
-    private(set) lazy var updaterController: SPUStandardUpdaterController = {
-        SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        )
-    }()
+    /// Only initialized when a valid EdDSA public key is present in Info.plist.
+    private(set) var updaterController: SPUStandardUpdaterController?
+
+    /// Whether Sparkle is available (valid EdDSA key configured).
+    var isSparkleAvailable: Bool { updaterController != nil }
 
     /// Shared defaults for the app group (cached to avoid per-tick allocation).
     private let sharedDefaults = UserDefaults(suiteName: "group.com.poisonpenllc.Claude-Status")
@@ -42,8 +39,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupURLHandler()
         monitor.start()
 
-        // Touch the updater to trigger lazy init (only runs here, not during tests)
-        _ = updaterController
+        // Initialize Sparkle only if a valid EdDSA public key is configured
+        if let edKey = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String,
+           !edKey.isEmpty {
+            updaterController = SPUStandardUpdaterController(
+                startingUpdater: true,
+                updaterDelegate: nil,
+                userDriverDelegate: nil
+            )
+        }
 
         // Close popover when clicking outside
         eventMonitor = NSEvent.addGlobalMonitorForEvents(
@@ -445,7 +449,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let pluginState = PluginDetector().detect()
         let settingsView = SettingsView(
             pluginState: pluginState,
-            updater: updaterController.updater,
+            updater: updaterController?.updater,
             onInstallPlugin: { [weak self] in
                 self?.performPluginInstall()
                 // Reopen settings to reflect new state

@@ -25,7 +25,7 @@
 	<key>SUFeedURL</key>
 	<string>https://gmr.github.io/claude-status/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>SPARKLE_PUBLIC_KEY_PLACEHOLDER</string>
+	<string>$(SPARKLE_ED_KEY)</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUScheduledCheckInterval</key>
