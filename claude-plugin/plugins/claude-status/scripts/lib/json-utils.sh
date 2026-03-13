@@ -78,41 +78,47 @@ ends_with_question() {
     local transcript="$1"
     [[ -f "$transcript" ]] || return 1
 
-    # Read last 8KB — enough to capture the final assistant message
-    local last_assistant
-    last_assistant=$(tail -c 8192 "$transcript" | grep '"stop_reason":"end_turn"' | tail -1) || return 1
-    [[ -n "$last_assistant" ]] || return 1
-
-    # Extract the last "text":"..." value from the assistant message.
-    # This finds the final text content block, which is what the user sees.
     local last_text
-    last_text=$(printf '%s' "$last_assistant" | awk '{
-        result = ""
-        rest = $0
-        while (1) {
-            # Find next "text":" occurrence
-            idx = index(rest, "\"text\":\"")
-            if (idx == 0) break
-            rest = substr(rest, idx + 8)
-            # Extract the string value (handle escaped quotes)
-            val = ""
-            while (length(rest) > 0) {
-                c = substr(rest, 1, 1)
-                if (c == "\\") {
-                    val = val substr(rest, 1, 2)
-                    rest = substr(rest, 3)
-                } else if (c == "\"") {
-                    rest = substr(rest, 2)
-                    break
-                } else {
-                    val = val c
-                    rest = substr(rest, 2)
+
+    if command -v jq >/dev/null 2>&1; then
+        # jq path: reliable JSON parsing, handles all edge cases
+        last_text=$(tail -200 "$transcript" \
+            | jq -r 'select(.message.stop_reason == "end_turn")
+                      | .message.content[-1]
+                      | select(.type == "text") | .text' 2>/dev/null \
+            | tail -1) || return 1
+    else
+        # awk fallback: read last 200 lines, find last end_turn line, extract text
+        local last_assistant
+        last_assistant=$(tail -200 "$transcript" | grep '"stop_reason":"end_turn"' | tail -1) || return 1
+        [[ -n "$last_assistant" ]] || return 1
+
+        last_text=$(printf '%s' "$last_assistant" | awk '{
+            result = ""
+            rest = $0
+            while (1) {
+                idx = index(rest, "\"text\":\"")
+                if (idx == 0) break
+                rest = substr(rest, idx + 8)
+                val = ""
+                while (length(rest) > 0) {
+                    c = substr(rest, 1, 1)
+                    if (c == "\\") {
+                        val = val substr(rest, 1, 2)
+                        rest = substr(rest, 3)
+                    } else if (c == "\"") {
+                        rest = substr(rest, 2)
+                        break
+                    } else {
+                        val = val c
+                        rest = substr(rest, 2)
+                    }
                 }
+                result = val
             }
-            result = val
-        }
-        print result
-    }') || return 1
+            print result
+        }') || return 1
+    fi
 
     [[ -n "$last_text" ]] || return 1
 
