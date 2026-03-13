@@ -7,6 +7,8 @@ struct SessionFocuser {
     /// Focuses the session's host app — iTerm2 for terminal sessions,
     /// or the IDE app for Xcode/VS Code/JetBrains/Zed sessions.
     func focus(session: ClaudeSession) {
+        NSLog("Claude Status: focus called — source=%@, iTermSessionId=%@, tmuxPaneId=%@, pid=%d",
+              "\(session.source)", session.iTermSessionId ?? "nil", session.tmuxPaneId ?? "nil", session.pid)
         switch session.source {
         case .terminal(let app):
             focusTerminal(app: app, sessionId: session.iTermSessionId, tmuxPaneId: session.tmuxPaneId, tmuxSocket: session.tmuxSocket, workingDirectory: session.workingDirectory)
@@ -59,8 +61,10 @@ struct SessionFocuser {
     ]
 
     private func focusTerminal(app: String, sessionId: String?, tmuxPaneId: String?, tmuxSocket: String?, workingDirectory: String) {
+        NSLog("Claude Status: focusTerminal app=%@, sessionId=%@, tmuxPaneId=%@", app, sessionId ?? "nil", tmuxPaneId ?? "nil")
         // tmux sessions: select the pane/window then activate the terminal
         if let paneId = tmuxPaneId {
+            NSLog("Claude Status: focusing tmux pane %@", paneId)
             focusTmuxPane(paneId: paneId, socket: tmuxSocket)
             // iTerm2: use AppleScript to focus the tab hosting tmux
             if app == "iTerm2", let sessionId {
@@ -74,9 +78,11 @@ struct SessionFocuser {
         // iTerm2 supports focusing a specific session via AppleScript
         if app == "iTerm2" {
             if let sessionId {
+                NSLog("Claude Status: focusing iTerm2 by session ID %@", sessionId)
                 focusBySessionId(sessionId)
                 return
             }
+            NSLog("Claude Status: no iTerm session ID, opening new tab at %@", workingDirectory)
             openTab(at: workingDirectory)
             return
         }
@@ -168,10 +174,14 @@ struct SessionFocuser {
         } else {
             uniqueId = sessionId
         }
+        NSLog("Claude Status: focusBySessionId raw=%@, uniqueId=%@", sessionId, uniqueId)
 
         // Validate to prevent AppleScript injection
         let range = NSRange(uniqueId.startIndex..., in: uniqueId)
-        guard Self.safeIdPattern.firstMatch(in: uniqueId, range: range) != nil else { return }
+        guard Self.safeIdPattern.firstMatch(in: uniqueId, range: range) != nil else {
+            NSLog("Claude Status: uniqueId failed safe-ID validation, aborting")
+            return
+        }
 
         // Select the correct tab/window BEFORE activating so iTerm raises
         // the right window to front (not whichever was last active).
@@ -222,8 +232,16 @@ struct SessionFocuser {
     }
 
     private func runAppleScript(_ source: String) {
-        guard let script = NSAppleScript(source: source) else { return }
+        guard let script = NSAppleScript(source: source) else {
+            NSLog("Claude Status: NSAppleScript init failed")
+            return
+        }
         var error: NSDictionary?
-        script.executeAndReturnError(&error)
+        let result = script.executeAndReturnError(&error)
+        if let error {
+            NSLog("Claude Status: AppleScript error: %@", error)
+        } else {
+            NSLog("Claude Status: AppleScript executed OK, result=%@", result.stringValue ?? "(none)")
+        }
     }
 }

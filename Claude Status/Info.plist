@@ -22,6 +22,8 @@
 	<false/>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Claude Status needs to send Apple Events to terminal apps like iTerm2 to focus the correct tab and window when you click a session.</string>
 	<key>SUFeedURL</key>
 	<string>https://gmr.github.io/claude-status/appcast.xml</string>
 	<key>SUPublicEDKey</key>
