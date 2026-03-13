@@ -84,6 +84,17 @@ jobs:
           echo "$PROVISIONING_PROFILE_WIDGET" | base64 --decode \
             -o "$HOME/Library/MobileDevice/Provisioning Profiles/widget.provisionprofile"
 
+      - name: Sign plugin binaries for notarization
+        env:
+          CODE_SIGN_IDENTITY: ${{ secrets.CODE_SIGN_IDENTITY }}
+        run: |
+          codesign --force --sign "$CODE_SIGN_IDENTITY" \
+            --options runtime \
+            claude-status-plugin/plugins/claude-status/scripts/session-status
+          codesign --force --sign "$CODE_SIGN_IDENTITY" \
+            --options runtime \
+            claude-status-plugin/plugins/claude-status/scripts/set-session-name
+
       - name: Resolve Sparkle packages
         run: |
           xcodebuild -resolvePackageDependencies \

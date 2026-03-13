@@ -38,6 +38,8 @@ jobs:
           mkdir -p plugins/claude-status/scripts
           cp target/release/session-status plugins/claude-status/scripts/
           cp target/release/set-session-name plugins/claude-status/scripts/
+          codesign -fs - plugins/claude-status/scripts/session-status
+          codesign -fs - plugins/claude-status/scripts/set-session-name
 
       - name: Upload plugin binaries
         uses: actions/upload-artifact@v4

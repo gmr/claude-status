@@ -13,6 +13,8 @@ build-plugin:
     mkdir -p claude-status-plugin/plugins/claude-status/scripts
     cp claude-status-plugin/target/release/session-status claude-status-plugin/plugins/claude-status/scripts/
     cp claude-status-plugin/target/release/set-session-name claude-status-plugin/plugins/claude-status/scripts/
+    codesign -fs - claude-status-plugin/plugins/claude-status/scripts/session-status
+    codesign -fs - claude-status-plugin/plugins/claude-status/scripts/set-session-name
 
 # Build debug configuration
 build: build-plugin
@@ -53,6 +55,8 @@ sync-plugin: build-plugin
     mkdir -p ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/
     rsync -a claude-status-plugin/plugins/claude-status/ \
         ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/
+    codesign -fs - ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/scripts/session-status
+    codesign -fs - ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/scripts/set-session-name
     python3 -c "\
     import json, pathlib; \
     p = pathlib.Path.home() / '.claude/plugins/installed_plugins.json'; \
