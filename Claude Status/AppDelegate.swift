@@ -70,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         let config = RollbarConfig.mutableConfig(withAccessToken: token)
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+        let version = Bundle.main.appVersion
         config.setServerHost(nil, root: nil, branch: nil, codeVersion: version)
         Rollbar.initWithConfiguration(config)
     }
@@ -360,7 +360,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Only show the dialog once per app version to avoid nagging
         let lastPromptVersion = UserDefaults.standard.string(forKey: Self.pluginPromptShownKey)
-        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        let currentVersion = Bundle.main.appVersion
         if lastPromptVersion == currentVersion { return }
 
         UserDefaults.standard.set(currentVersion, forKey: Self.pluginPromptShownKey)
@@ -523,6 +523,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Focus the session's host app
         focuser.focus(session: session)
+    }
+}
+
+// MARK: - Bundle Version
+
+extension Bundle {
+    /// The app's marketing version string (CFBundleShortVersionString).
+    var appVersion: String {
+        infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
     }
 }
 

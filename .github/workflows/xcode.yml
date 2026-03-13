@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-    name: Build
+  build-plugin:
+    name: Build Plugin
     runs-on: macos-latest
 
     steps:
@@ -38,6 +38,30 @@ jobs:
           mkdir -p plugins/claude-status/scripts
           cp target/release/session-status plugins/claude-status/scripts/
           cp target/release/set-session-name plugins/claude-status/scripts/
+
+      - name: Upload plugin binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-binaries
+          path: claude-status-plugin/plugins/claude-status/scripts/
+          retention-days: 1
+
+  build:
+    name: Build
+    needs: build-plugin
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Download plugin binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-binaries
+          path: claude-status-plugin/plugins/claude-status/scripts/
 
       - name: Build
         run: |
@@ -52,6 +76,7 @@ jobs:
 
   test:
     name: Test
+    needs: build-plugin
     runs-on: macos-latest
 
     steps:
@@ -60,27 +85,11 @@ jobs:
         with:
           submodules: true
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Cargo
-        uses: actions/cache@v4
+      - name: Download plugin binaries
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            claude-status-plugin/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('claude-status-plugin/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Build plugin binaries
-        run: |
-          cd claude-status-plugin
-          cargo build --release
-          mkdir -p plugins/claude-status/scripts
-          cp target/release/session-status plugins/claude-status/scripts/
-          cp target/release/set-session-name plugins/claude-status/scripts/
+          name: plugin-binaries
+          path: claude-status-plugin/plugins/claude-status/scripts/
 
       - name: Test
         run: |

@@ -2,7 +2,6 @@ project := "Claude Status.xcodeproj"
 scheme := "Claude Status"
 # Override deployment target for CI/older Xcode that doesn't know macOS 26.2
 xcode_flags := "CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=15.0"
-derived_data := `xcodebuild -project "Claude Status.xcodeproj" -scheme "Claude Status" -showBuildSettings 2>/dev/null | grep ' BUILD_DIR ' | awk '{print $3}'`
 app_name := "Claude Status"
 
 # Calculate version from git tags: tag + .devN for unreleased commits
@@ -35,10 +34,13 @@ clean:
 
 # Kill running app, copy debug build to /Applications, and relaunch
 swap: build
-    -pkill -x "{{app_name}}"
-    @sleep 0.5
+    #!/usr/bin/env bash
+    set -euo pipefail
+    derived_data=$(xcodebuild -project "Claude Status.xcodeproj" -scheme "Claude Status" -showBuildSettings 2>/dev/null | grep ' BUILD_DIR ' | awk '{print $3}')
+    pkill -x "{{app_name}}" || true
+    sleep 0.5
     rm -rf "/Applications/{{app_name}}.app"
-    cp -R "{{derived_data}}/Debug/{{app_name}}.app" "/Applications/{{app_name}}.app"
+    cp -R "${derived_data}/Debug/{{app_name}}.app" "/Applications/{{app_name}}.app"
     open -a "{{app_name}}"
 
 # Show the calculated version
