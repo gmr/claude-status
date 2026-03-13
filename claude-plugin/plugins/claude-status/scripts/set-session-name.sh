@@ -49,11 +49,6 @@ if [[ -z "$CSTATUS_FILE" ]]; then
     exit 1
 fi
 
-# Lock the .cstatus file to prevent concurrent writes from session-status.sh.
-LOCK_FILE="${CSTATUS_FILE}.lock"
-exec 9>"$LOCK_FILE"
-flock -x 9
-
 # Read the current .cstatus content and inject/replace the session_name field.
 CURRENT=$(cat "$CSTATUS_FILE")
 SAFE_NAME=$(json_escape "$SESSION_NAME")
@@ -94,12 +89,9 @@ UPDATED=$(printf '%s' "$CURRENT" | awk '
 
 # Write atomically
 TMP_FILE="${CSTATUS_FILE}.tmp.$$"
-trap 'rm -f "$TMP_FILE" "$LOCK_FILE"' EXIT
+trap 'rm -f "$TMP_FILE"' EXIT
 printf '%s\n' "$UPDATED" > "$TMP_FILE"
 mv -f "$TMP_FILE" "$CSTATUS_FILE"
-
-# Release lock
-exec 9>&-
 
 echo "Session name set to: ${SESSION_NAME}"
 
