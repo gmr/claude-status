@@ -1,0 +1,3 @@
+[submodule "claude-status-plugin"]
+	path = claude-status-plugin
+	url = git@github.com:gmr/claude-status-plugin.git
