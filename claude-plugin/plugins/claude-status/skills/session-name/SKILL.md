@@ -21,10 +21,10 @@ Sets a custom display name for the current Claude Code session in the Claude Sta
 
 1. Extract the desired session name from the user's arguments. If no name was provided, ask the user what they'd like to name this session.
 
-2. Run the set-session-name.sh script from the plugin:
+2. Run the set-session-name.py script from the plugin:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/set-session-name.sh" "<session-name>"
+"${CLAUDE_PLUGIN_ROOT}/scripts/set-session-name.py" "<session-name>"
 ```
 
 The script updates the session's `.cstatus` file with a `session_name` field. The hook script carries this name forward on subsequent status updates.

@@ -101,20 +101,19 @@ claude-plugin/                         # Bundled Claude Code plugin
   plugins/claude-status/
     hooks/hooks.json                   # 14 hook events (SessionStart, Stop, PreToolUse, etc.)
     scripts/
-      session-status.sh                # Writes .cstatus JSON, posts Darwin notification
-      set-session-name.sh              # Sets custom session name in .cstatus
-      lib/json-utils.sh               # JSON parsing helpers
+      session-status.py                # Writes .cstatus JSON, posts Darwin notification
+      set-session-name.py              # Sets custom session name in .cstatus
     skills/session-name/SKILL.md       # /name-session slash command
-    .claude-plugin/plugin.json         # Plugin metadata (v1.0.0)
+    .claude-plugin/plugin.json         # Plugin metadata
   .claude-plugin/marketplace.json      # Marketplace definition
-  tests/session-status.bats            # Bash test suite for hook script
+  tests/test_session_status.py         # Python unittest suite for hook script
 
 assets/                                # Marketing assets (screenshot, icons)
 ```
 
 ### Session Discovery Pipeline
 
-1. **Plugin hook** (`session-status.sh`) fires on Claude Code lifecycle events and writes `.cstatus` JSON to `~/.claude/projects/<encoded-path>/<session-id>.cstatus`
+1. **Plugin hook** (`session-status.py`) fires on Claude Code lifecycle events and writes `.cstatus` JSON to `~/.claude/projects/<encoded-path>/<session-id>.cstatus`
 2. **SessionDiscovery** scans `~/.claude/projects/*/` for `.cstatus` files, parses JSON (session ID, PID, state, activity, cwd), validates PIDs with `kill(pid, 0)`
 3. **Source classification** walks the process tree via `proc_pidinfo`/`proc_pidpath` and reads environment variables via `sysctl KERN_PROCARGS2` to identify the host app
 4. **SessionMonitor** (`@Observable`) maintains the session list with three update mechanisms:

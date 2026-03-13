@@ -38,9 +38,21 @@ swap: build
 show-version:
     @echo "{{version}}"
 
-# Sync the full plugin to the installed plugin cache, removing old versions
+# Sync the full plugin to the installed plugin cache and update the registry
 sync-plugin:
     rm -rf ~/.claude/plugins/cache/claude-status-marketplace/
     mkdir -p ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/
     rsync -a claude-plugin/plugins/claude-status/ \
         ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/
+    python3 -c "\
+    import json, pathlib; \
+    p = pathlib.Path.home() / '.claude/plugins/installed_plugins.json'; \
+    d = json.loads(p.read_text()); \
+    key = 'claude-status@claude-status-marketplace'; \
+    ver = '{{version}}'; \
+    path = str(pathlib.Path.home() / '.claude/plugins/cache/claude-status-marketplace/claude-status' / ver); \
+    entry = d.get('plugins', {}).get(key, [{}])[0]; \
+    entry['installPath'] = path; \
+    entry['version'] = ver; \
+    d.setdefault('plugins', {})[key] = [entry]; \
+    p.write_text(json.dumps(d, indent=2) + '\n')"

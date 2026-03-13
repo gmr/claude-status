@@ -95,7 +95,7 @@ struct PluginDetector {
 
     // MARK: - Settings Hooks Check
 
-    /// Looks for session-status.sh references in ~/.claude/settings.json hooks.
+    /// Looks for session-status references in ~/.claude/settings.json hooks.
     private func checkSettingsHooks() -> Bool {
         let url = Self.claudeDir
             .appendingPathComponent("settings.json")
