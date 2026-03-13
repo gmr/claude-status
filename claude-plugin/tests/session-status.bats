@@ -138,7 +138,7 @@ read_status_int() {
 
 @test "Notification idle_prompt sets waiting when transcript ends with question" {
     cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
-{"type":"assistant","content":[{"type":"text","text":"What would you like help with?"}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"What would you like help with?"}],"stop_reason":"end_turn"}}
 JSONL
     run_hook "Notification" ',"notification_type":"idle_prompt"'
     [ "$status" -eq 0 ]
@@ -224,7 +224,7 @@ JSONL
     # Create a transcript with an assistant message ending in a question
     cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
 {"type":"human","content":[{"type":"text","text":"Fix the bug"}]}
-{"type":"assistant","content":[{"type":"text","text":"I found the issue. Want me to apply the fix?"}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I found the issue. Want me to apply the fix?"}],"stop_reason":"end_turn"}}
 JSONL
     run_hook "Stop"
     [ "$status" -eq 0 ]
@@ -235,7 +235,7 @@ JSONL
 @test "Stop sets idle when transcript ends without question" {
     cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
 {"type":"human","content":[{"type":"text","text":"Fix the bug"}]}
-{"type":"assistant","content":[{"type":"text","text":"Done! The bug has been fixed."}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Done! The bug has been fixed."}],"stop_reason":"end_turn"}}
 JSONL
     run_hook "Stop"
     [ "$status" -eq 0 ]
@@ -251,7 +251,7 @@ JSONL
 
 @test "Stop detects question with trailing whitespace" {
     cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
-{"type":"assistant","content":[{"type":"text","text":"Should I continue?   "}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Should I continue?   "}],"stop_reason":"end_turn"}}
 JSONL
     run_hook "Stop"
     [ "$status" -eq 0 ]
@@ -261,9 +261,9 @@ JSONL
 @test "Stop detects question in last assistant message only" {
     # First assistant message has a question, but the last one doesn't
     cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
-{"type":"assistant","content":[{"type":"text","text":"Should I proceed?"}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Should I proceed?"}],"stop_reason":"end_turn"}}
 {"type":"human","content":[{"type":"text","text":"Yes"}]}
-{"type":"assistant","content":[{"type":"text","text":"Done, all changes applied."}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Done, all changes applied."}],"stop_reason":"end_turn"}}
 JSONL
     run_hook "Stop"
     [ "$status" -eq 0 ]

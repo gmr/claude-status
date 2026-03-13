@@ -80,7 +80,7 @@ ends_with_question() {
 
     # Read last 8KB — enough to capture the final assistant message
     local last_assistant
-    last_assistant=$(tail -c 8192 "$transcript" | grep '"type":"assistant"' | tail -1) || return 1
+    last_assistant=$(tail -c 8192 "$transcript" | grep '"stop_reason":"end_turn"' | tail -1) || return 1
     [[ -n "$last_assistant" ]] || return 1
 
     # Extract the last "text":"..." value from the assistant message.
