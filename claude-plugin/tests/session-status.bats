@@ -136,6 +136,16 @@ read_status_int() {
     [ "$(read_status_field state)" = "idle" ]
 }
 
+@test "Notification idle_prompt sets waiting when transcript ends with question" {
+    cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
+{"type":"assistant","content":[{"type":"text","text":"What would you like help with?"}]}
+JSONL
+    run_hook "Notification" ',"notification_type":"idle_prompt"'
+    [ "$status" -eq 0 ]
+    [ "$(read_status_field state)" = "waiting" ]
+    [ "$(read_status_field activity)" = "question" ]
+}
+
 # --- SessionEnd ---
 
 @test "SessionEnd removes the status file" {

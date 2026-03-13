@@ -119,7 +119,12 @@ case "$EVENT" in
                 STATUS="waiting"
                 ;;
             idle_prompt)
-                STATUS="idle"
+                if ends_with_question "$TRANSCRIPT"; then
+                    STATUS="waiting"
+                    ACTIVITY="question"
+                else
+                    STATUS="idle"
+                fi
                 ;;
             *)
                 STATUS="idle"
