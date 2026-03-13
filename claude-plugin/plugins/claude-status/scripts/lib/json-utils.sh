@@ -70,3 +70,53 @@ extract_json_string() {
     }') || true
     echo "$result"
 }
+
+# Check if the last assistant message in a JSONL transcript ends with a question.
+# Reads only the tail of the file for efficiency.
+# Returns 0 if question detected, 1 otherwise.
+ends_with_question() {
+    local transcript="$1"
+    [[ -f "$transcript" ]] || return 1
+
+    # Read last 8KB — enough to capture the final assistant message
+    local last_assistant
+    last_assistant=$(tail -c 8192 "$transcript" | grep '"type":"assistant"' | tail -1) || return 1
+    [[ -n "$last_assistant" ]] || return 1
+
+    # Extract the last "text":"..." value from the assistant message.
+    # This finds the final text content block, which is what the user sees.
+    local last_text
+    last_text=$(printf '%s' "$last_assistant" | awk '{
+        result = ""
+        rest = $0
+        while (1) {
+            # Find next "text":" occurrence
+            idx = index(rest, "\"text\":\"")
+            if (idx == 0) break
+            rest = substr(rest, idx + 8)
+            # Extract the string value (handle escaped quotes)
+            val = ""
+            while (length(rest) > 0) {
+                c = substr(rest, 1, 1)
+                if (c == "\\") {
+                    val = val substr(rest, 1, 2)
+                    rest = substr(rest, 3)
+                } else if (c == "\"") {
+                    rest = substr(rest, 2)
+                    break
+                } else {
+                    val = val c
+                    rest = substr(rest, 2)
+                }
+            }
+            result = val
+        }
+        print result
+    }') || return 1
+
+    [[ -n "$last_text" ]] || return 1
+
+    # Strip trailing whitespace and check for question mark
+    last_text="${last_text%"${last_text##*[! ]}"}"
+    [[ "$last_text" == *'?' ]]
+}

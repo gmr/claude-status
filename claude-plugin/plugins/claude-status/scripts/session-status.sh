@@ -105,7 +105,12 @@ case "$EVENT" in
         STATUS="active"
         ;;
     Stop)
-        STATUS="idle"
+        if ends_with_question "$TRANSCRIPT"; then
+            STATUS="waiting"
+            ACTIVITY="question"
+        else
+            STATUS="idle"
+        fi
         ;;
     Notification)
         NTYPE=$(extract_json_string "notification_type" "$INPUT")

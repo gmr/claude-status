@@ -208,6 +208,58 @@ read_status_int() {
     [ "$(read_status_field state)" = "idle" ]
 }
 
+# --- Stop with question detection ---
+
+@test "Stop sets waiting when transcript ends with question" {
+    # Create a transcript with an assistant message ending in a question
+    cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
+{"type":"human","content":[{"type":"text","text":"Fix the bug"}]}
+{"type":"assistant","content":[{"type":"text","text":"I found the issue. Want me to apply the fix?"}]}
+JSONL
+    run_hook "Stop"
+    [ "$status" -eq 0 ]
+    [ "$(read_status_field state)" = "waiting" ]
+    [ "$(read_status_field activity)" = "question" ]
+}
+
+@test "Stop sets idle when transcript ends without question" {
+    cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
+{"type":"human","content":[{"type":"text","text":"Fix the bug"}]}
+{"type":"assistant","content":[{"type":"text","text":"Done! The bug has been fixed."}]}
+JSONL
+    run_hook "Stop"
+    [ "$status" -eq 0 ]
+    [ "$(read_status_field state)" = "idle" ]
+}
+
+@test "Stop sets idle when transcript file is missing" {
+    # No transcript file exists — should fall back to idle
+    run_hook "Stop"
+    [ "$status" -eq 0 ]
+    [ "$(read_status_field state)" = "idle" ]
+}
+
+@test "Stop detects question with trailing whitespace" {
+    cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
+{"type":"assistant","content":[{"type":"text","text":"Should I continue?   "}]}
+JSONL
+    run_hook "Stop"
+    [ "$status" -eq 0 ]
+    [ "$(read_status_field state)" = "waiting" ]
+}
+
+@test "Stop detects question in last assistant message only" {
+    # First assistant message has a question, but the last one doesn't
+    cat > "${PROJECT_DIR}/transcript.jsonl" <<'JSONL'
+{"type":"assistant","content":[{"type":"text","text":"Should I proceed?"}]}
+{"type":"human","content":[{"type":"text","text":"Yes"}]}
+{"type":"assistant","content":[{"type":"text","text":"Done, all changes applied."}]}
+JSONL
+    run_hook "Stop"
+    [ "$status" -eq 0 ]
+    [ "$(read_status_field state)" = "idle" ]
+}
+
 # --- ConfigChange ---
 
 @test "ConfigChange exits without writing status" {
