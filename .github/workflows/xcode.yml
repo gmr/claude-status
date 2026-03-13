@@ -14,6 +14,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            claude-status-plugin/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('claude-status-plugin/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build plugin binaries
+        run: |
+          cd claude-status-plugin
+          cargo build --release
+          mkdir -p plugins/claude-status/scripts
+          cp target/release/session-status plugins/claude-status/scripts/
+          cp target/release/set-session-name plugins/claude-status/scripts/
 
       - name: Build
         run: |
@@ -33,6 +57,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            claude-status-plugin/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('claude-status-plugin/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build plugin binaries
+        run: |
+          cd claude-status-plugin
+          cargo build --release
+          mkdir -p plugins/claude-status/scripts
+          cp target/release/session-status plugins/claude-status/scripts/
+          cp target/release/set-session-name plugins/claude-status/scripts/
 
       - name: Test
         run: |

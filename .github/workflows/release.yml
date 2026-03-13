@@ -19,6 +19,39 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            claude-status-plugin/target
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('claude-status-plugin/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-release-
+
+      - name: Build universal plugin binaries
+        run: |
+          cd claude-status-plugin
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+          mkdir -p plugins/claude-status/scripts
+          lipo -create \
+            target/aarch64-apple-darwin/release/session-status \
+            target/x86_64-apple-darwin/release/session-status \
+            -output plugins/claude-status/scripts/session-status
+          lipo -create \
+            target/aarch64-apple-darwin/release/set-session-name \
+            target/x86_64-apple-darwin/release/set-session-name \
+            -output plugins/claude-status/scripts/set-session-name
 
       - name: Import signing certificate
         env:

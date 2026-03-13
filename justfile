@@ -8,8 +8,15 @@ app_name := "Claude Status"
 # Calculate version from git tags: tag + .devN for unreleased commits
 version := `tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"); commits=$(git rev-list --count "$tag"...HEAD 2>/dev/null || echo "0"); if [ "$commits" -gt 0 ]; then echo "$tag.dev$commits"; else echo "$tag"; fi`
 
+# Build the Rust plugin binaries and copy to the plugin scripts directory
+build-plugin:
+    cd claude-status-plugin && cargo build --release
+    mkdir -p claude-status-plugin/plugins/claude-status/scripts
+    cp claude-status-plugin/target/release/session-status claude-status-plugin/plugins/claude-status/scripts/
+    cp claude-status-plugin/target/release/set-session-name claude-status-plugin/plugins/claude-status/scripts/
+
 # Build debug configuration
-build:
+build: build-plugin
     xcodebuild -project "{{project}}" -scheme "{{scheme}}" -configuration Debug build {{xcode_flags}} MARKETING_VERSION="{{version}}"
 
 # Run all unit tests
@@ -39,10 +46,10 @@ show-version:
     @echo "{{version}}"
 
 # Sync the full plugin to the installed plugin cache and update the registry
-sync-plugin:
+sync-plugin: build-plugin
     rm -rf ~/.claude/plugins/cache/claude-status-marketplace/
     mkdir -p ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/
-    rsync -a claude-plugin/plugins/claude-status/ \
+    rsync -a claude-status-plugin/plugins/claude-status/ \
         ~/.claude/plugins/cache/claude-status-marketplace/claude-status/{{version}}/
     python3 -c "\
     import json, pathlib; \
