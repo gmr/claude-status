@@ -55,9 +55,13 @@ struct SessionListView: View {
     // MARK: - Subviews
 
     private var header: some View {
-        HStack {
+        HStack(alignment: .bottom) {
             Text("Claude Status")
                 .font(.system(size: 13, weight: .semibold))
+            Spacer()
+            Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")")
+                .font(.system(size: 10))
+                .foregroundStyle(.tertiary)
             Spacer()
             Button(action: {
                 withAnimation(.linear(duration: 0.5)) {
