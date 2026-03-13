@@ -156,23 +156,38 @@ struct SessionFocuser {
         selectPane.waitUntilExit()
     }
 
-    /// Validates that a string looks like a UUID or iTerm2 session ID (safe for AppleScript interpolation).
+    /// Validates that a string contains only alphanumeric characters and hyphens (safe for AppleScript interpolation).
     private static let safeIdPattern = try! NSRegularExpression(pattern: #"^[A-Za-z0-9\-]+$"#)
 
     private func focusBySessionId(_ sessionId: String) {
-        // Validate sessionId to prevent AppleScript injection
-        let range = NSRange(sessionId.startIndex..., in: sessionId)
-        guard Self.safeIdPattern.firstMatch(in: sessionId, range: range) != nil else { return }
+        // ITERM_SESSION_ID format is "w0t0p0:UUID" — extract the UUID portion
+        // which matches iTerm2's AppleScript `unique ID` property.
+        let uniqueId: String
+        if let colonIndex = sessionId.firstIndex(of: ":") {
+            uniqueId = String(sessionId[sessionId.index(after: colonIndex)...])
+        } else {
+            uniqueId = sessionId
+        }
 
+        // Validate to prevent AppleScript injection
+        let range = NSRange(uniqueId.startIndex..., in: uniqueId)
+        guard Self.safeIdPattern.firstMatch(in: uniqueId, range: range) != nil else { return }
+
+        // Select the correct tab/window BEFORE activating so iTerm raises
+        // the right window to front (not whichever was last active).
+        // Note: `select aTab` works at top scope but window selection requires
+        // a `tell aWindow` block to properly raise the window.
         let script = """
         tell application "iTerm2"
-            activate
             repeat with aWindow in windows
                 repeat with aTab in tabs of aWindow
                     repeat with aSession in sessions of aTab
-                        if unique ID of aSession is "\(sessionId)" then
+                        if unique ID of aSession is "\(uniqueId)" then
                             select aTab
-                            select aWindow
+                            tell aWindow
+                                select
+                            end tell
+                            activate
                             return
                         end if
                     end repeat
