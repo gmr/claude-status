@@ -18,7 +18,7 @@ struct PluginInstaller {
             .path
     }
 
-    /// Version of the bundled plugin (stamped from MARKETING_VERSION at build time).
+    /// Version of the bundled plugin (read from the plugin's own plugin.json).
     var bundledPluginVersion: String? {
         guard let marketplacePath = bundledMarketplacePath else { return nil }
         let pluginJSON = URL(fileURLWithPath: marketplacePath)
