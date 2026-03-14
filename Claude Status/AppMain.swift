@@ -8,7 +8,10 @@ import AppKit
 struct Main {
     static func main() {
         // Enforce single instance — if another copy is already running, activate it and exit.
-        guard let bundleID = Bundle.main.bundleIdentifier else { return }
+        guard let bundleID = Bundle.main.bundleIdentifier else {
+            assertionFailure("Missing bundle identifier")
+            return
+        }
         let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
         if running.count > 1 {
             // Activate the other instance (the one that isn't us)

@@ -41,11 +41,15 @@ jobs:
           codesign -fs - plugins/claude-status/scripts/session-status
           codesign -fs - plugins/claude-status/scripts/set-session-name
 
+      - name: Archive plugin binaries
+        run: |
+          tar -C claude-status-plugin/plugins/claude-status -czf plugin-binaries.tgz scripts
+
       - name: Upload plugin binaries
         uses: actions/upload-artifact@v4
         with:
           name: plugin-binaries
-          path: claude-status-plugin/plugins/claude-status/scripts/
+          path: plugin-binaries.tgz
           retention-days: 1
 
   build:
@@ -63,7 +67,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: plugin-binaries
-          path: claude-status-plugin/plugins/claude-status/scripts/
+          path: .
+
+      - name: Extract plugin binaries
+        run: |
+          mkdir -p claude-status-plugin/plugins/claude-status
+          tar -xzf plugin-binaries.tgz -C claude-status-plugin/plugins/claude-status
 
       - name: Build
         run: |
@@ -91,7 +100,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: plugin-binaries
-          path: claude-status-plugin/plugins/claude-status/scripts/
+          path: .
+
+      - name: Extract plugin binaries
+        run: |
+          mkdir -p claude-status-plugin/plugins/claude-status
+          tar -xzf plugin-binaries.tgz -C claude-status-plugin/plugins/claude-status
 
       - name: Test
         run: |
