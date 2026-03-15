@@ -98,19 +98,28 @@ final class ProductivityTracker {
 
     /// Computes a 0–100 productivity score.
     ///
-    /// Active time is the main driver. Waiting is the biggest penalty — it means
-    /// Claude is blocked on you. Idle and compacting are neutral.
+    /// Only "engaged" time counts — active, waiting, and compacting. Idle time is
+    /// excluded because it just means you aren't using Claude right now, not that
+    /// you're being unproductive.
     ///
     /// Weights:
-    /// - Active time: up to 100 points (the goal)
-    /// - Waiting penalty: up to -50 points (you're the bottleneck)
-    /// - Concurrency bonus: up to 20 points (capped at 4 concurrent active sessions)
+    /// - Engaged-active ratio: up to 100 points (the goal)
+    /// - Waiting penalty: up to -25 points (Claude blocked on you)
+    /// - Concurrency bonus: up to 40 points (capped at 4 concurrent active sessions)
     private func calculateScore(_ stats: ProductivityStats) -> Int {
-        guard stats.totalSessionTime > 0 else { return 0 }
+        let active = stats.timeInState["active"] ?? 0
+        let waiting = stats.timeInState["waiting"] ?? 0
+        let compacting = stats.timeInState["compacting"] ?? 0
+        let engaged = active + waiting + compacting
 
-        let baseScore = stats.activePercent * 100
-            - stats.waitingPercent * 50
-            + min(stats.averageConcurrency, 4) * 5
+        guard engaged > 0 else { return 0 }
+
+        let activeRatio = active / engaged
+        let waitingRatio = waiting / engaged
+
+        let baseScore = activeRatio * 100
+            - waitingRatio * 25
+            + min(stats.averageConcurrency, 4) * 10
 
         return max(0, min(100, Int(baseScore)))
     }
