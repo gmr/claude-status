@@ -132,6 +132,13 @@ jobs:
             File.write("Claude Status.xcodeproj/project.pbxproj", pbxproj)
           '
 
+      - name: Derive version from tag
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Build archive
         run: |
           xcodebuild clean archive \
@@ -147,7 +154,8 @@ jobs:
             ENABLE_HARDENED_RUNTIME=YES \
             SPARKLE_ED_KEY="${{ secrets.SPARKLE_ED_PUBLIC_KEY }}" \
             ROLLBAR_ACCESS_TOKEN="${{ secrets.ROLLBAR_ACCESS_TOKEN }}" \
-            MARKETING_VERSION="${{ github.event.release.tag_name }}" \
+            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
             MACOSX_DEPLOYMENT_TARGET=15.0
 
       - name: Create export options
@@ -205,7 +213,7 @@ jobs:
         id: package
         run: |
           APP_PATH="DerivedData/Export/Claude Status.app"
-          ZIP_NAME="Claude-Status-${{ github.event.release.tag_name }}.zip"
+          ZIP_NAME="Claude-Status-${{ steps.version.outputs.version }}.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_NAME"
           echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
 
@@ -213,12 +221,12 @@ jobs:
         id: pkg
         run: |
           APP_PATH="DerivedData/Export/Claude Status.app"
-          PKG_NAME="Claude-Status-${{ github.event.release.tag_name }}.pkg"
+          PKG_NAME="Claude-Status-${{ steps.version.outputs.version }}.pkg"
           pkgbuild \
             --component "$APP_PATH" \
             --install-location "/Applications" \
             --identifier "com.poisonpenllc.Claude-Status" \
-            --version "${{ github.event.release.tag_name }}" \
+            --version "${{ steps.version.outputs.version }}" \
             --sign "${{ secrets.INSTALLER_SIGN_IDENTITY }}" \
             "$PKG_NAME"
           echo "pkg_name=$PKG_NAME" >> "$GITHUB_OUTPUT"
