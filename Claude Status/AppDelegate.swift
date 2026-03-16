@@ -382,6 +382,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.global(qos: .utility).async { [weak self] in
             if let error = installer.uninstall() {
                 NSLog("Claude Status: plugin removal failed during version check: %@", error)
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    alert.messageText = "Plugin Update Failed"
+                    alert.informativeText = "Could not remove the outdated plugin (v\(installedVersion)): \(error)\n\nYou can try removing it manually from Settings."
+                    alert.alertStyle = .warning
+                    alert.runModal()
+                }
                 return
             }
             NSLog("Claude Status: removed outdated plugin v%@ (bundled v%@)",
