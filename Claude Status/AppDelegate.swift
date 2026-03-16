@@ -367,7 +367,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showPluginInstallDialog()
     }
 
-    /// Silently reinstalls the plugin if the installed version doesn't match the bundled version.
+    /// Removes the plugin if the installed version doesn't match the bundled version,
+    /// then prompts the user to install the updated version.
     private func checkPluginVersionAndUpdate(detector: PluginDetector) {
         guard let bundledVersion = pluginInstaller.bundledPluginVersion,
               let installedVersion = detector.installedPluginVersion(),
@@ -375,24 +376,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // Version mismatch — reinstall silently on a background queue
-        // to avoid blocking the main thread with CLI operations
+        // Version mismatch — remove the old plugin on a background queue,
+        // then prompt for reinstall on the main thread
         let installer = pluginInstaller
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            if let uninstallError = installer.uninstall() {
-                NSLog("Claude Status: plugin uninstall failed during auto-update: %@", uninstallError)
+            if let error = installer.uninstall() {
+                NSLog("Claude Status: plugin removal failed during version check: %@", error)
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    alert.messageText = "Plugin Update Failed"
+                    alert.informativeText = "Could not remove the outdated plugin (v\(installedVersion)): \(error)\n\nYou can try removing it manually from Settings."
+                    alert.alertStyle = .warning
+                    alert.runModal()
+                }
                 return
             }
-            if let error = installer.install() {
-                NSLog("Claude Status: plugin auto-update from %@ to %@ failed: %@",
-                      installedVersion, bundledVersion, error)
-            } else {
-                NSLog("Claude Status: plugin auto-updated from %@ to %@",
-                      installedVersion, bundledVersion)
-                DispatchQueue.main.async {
-                    self?.monitor.invalidatePluginCache()
-                    self?.monitor.refresh()
-                }
+            NSLog("Claude Status: removed outdated plugin v%@ (bundled v%@)",
+                  installedVersion, bundledVersion)
+            DispatchQueue.main.async {
+                self?.monitor.invalidatePluginCache()
+                self?.monitor.refresh()
+                self?.showPluginInstallDialog()
             }
         }
     }

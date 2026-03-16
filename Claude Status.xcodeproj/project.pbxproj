@@ -318,7 +318,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PLUGIN_DIR=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources/claude-status-plugin\"\nmkdir -p \"${PLUGIN_DIR}\"\nrsync -a --delete \"${SRCROOT}/claude-status-plugin/.claude-plugin/\" \"${PLUGIN_DIR}/.claude-plugin/\"\nrsync -a --delete \"${SRCROOT}/claude-status-plugin/plugins/\" \"${PLUGIN_DIR}/plugins/\"\n\n# Stamp MARKETING_VERSION into the bundled plugin JSON files\nVERSION=\"${MARKETING_VERSION}\"\n/usr/bin/sed -i '' \"s/\\\"version\\\": \\\"[^\\\"]*\\\"/\\\"version\\\": \\\"${VERSION}\\\"/g\" \"${PLUGIN_DIR}/plugins/claude-status/.claude-plugin/plugin.json\"\n/usr/bin/sed -i '' \"s/\\\"version\\\": \\\"[^\\\"]*\\\"/\\\"version\\\": \\\"${VERSION}\\\"/g\" \"${PLUGIN_DIR}/.claude-plugin/marketplace.json\"\n";
+			shellScript = "PLUGIN_DIR=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources/claude-status-plugin\"\nmkdir -p \"${PLUGIN_DIR}\"\nrsync -a --delete \"${SRCROOT}/claude-status-plugin/.claude-plugin/\" \"${PLUGIN_DIR}/.claude-plugin/\"\nrsync -a --delete \"${SRCROOT}/claude-status-plugin/plugins/\" \"${PLUGIN_DIR}/plugins/\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

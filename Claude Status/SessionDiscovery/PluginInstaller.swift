@@ -107,6 +107,11 @@ struct PluginInstaller {
             }
         }
 
+        // 3. Clear the plugin cache directory if it exists
+        let cacheDir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude/plugins/cache/\(Self.marketplaceName)/claude-status")
+        try? FileManager.default.removeItem(at: cacheDir)
+
         return nil
     }
 
