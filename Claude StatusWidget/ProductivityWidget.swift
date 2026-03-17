@@ -42,8 +42,9 @@ nonisolated struct ProductivityTimelineProvider: TimelineProvider {
         let data = fetchData()
         let entry = ProductivityEntry(date: Date(), data: data)
 
-        // Fallback refresh every 5 minutes. The main app pushes immediate updates
-        // via WidgetCenter.reloadTimelines, so this is only a safety net.
+        // Fallback refresh every 5 minutes. The main app usually pushes
+        // event-driven updates via WidgetCenter.reloadTimelines, with
+        // productivity-only refreshes throttled in SessionMonitor.
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 5, to: Date())!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
