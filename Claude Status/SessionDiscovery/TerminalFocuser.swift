@@ -219,7 +219,7 @@ struct SessionFocuser {
         let escapedDir = appleScriptEscape(workingDirectory)
         let script = """
         tell application "Ghostty"
-            set matched to every terminal whose working directory contains "\(escapedDir)"
+            set matched to every terminal whose working directory is "\(escapedDir)"
             if (count of matched) > 0 then
                 focus (item 1 of matched)
             else
