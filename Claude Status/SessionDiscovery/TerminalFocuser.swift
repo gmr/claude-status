@@ -76,7 +76,13 @@ struct SessionFocuser {
                 focusBySessionId(sessionId)
                 return
             }
-            openTab(at: workingDirectory)
+            openITermTab(at: workingDirectory)
+            return
+        }
+
+        // Ghostty supports focusing a specific terminal via AppleScript
+        if app == "Ghostty" {
+            focusGhosttyTerminal(workingDirectory: workingDirectory)
             return
         }
 
@@ -205,7 +211,47 @@ struct SessionFocuser {
             .replacingOccurrences(of: "\"", with: "\\\"")
     }
 
-    private func openTab(at directory: String) {
+    // MARK: - Ghostty
+
+    /// Finds a Ghostty terminal whose working directory matches the session's
+    /// and focuses it, bringing the containing window to front.
+    ///
+    /// Both paths are normalized via alias resolution before comparison so that
+    /// symlink paths (e.g. ~/Source/…) and mount paths (e.g. /Volumes/…) that
+    /// refer to the same directory still match correctly.
+    private func focusGhosttyTerminal(workingDirectory: String) {
+        let escapedDir = appleScriptEscape(workingDirectory)
+        let script = """
+        tell application "Ghostty"
+            set targetDir to "\(escapedDir)"
+            try
+                set normalTarget to POSIX path of ((POSIX file targetDir) as alias)
+            on error
+                set normalTarget to targetDir
+            end try
+            repeat with aWindow in windows
+                repeat with t in every terminal of aWindow
+                    set tDir to working directory of t
+                    try
+                        set normalTDir to POSIX path of ((POSIX file tDir) as alias)
+                    on error
+                        set normalTDir to tDir
+                    end try
+                    if normalTDir is normalTarget then
+                        focus t
+                        set index of aWindow to 1
+                        activate
+                        return
+                    end if
+                end repeat
+            end repeat
+            activate
+        end tell
+        """
+        runAppleScript(script)
+    }
+
+    private func openITermTab(at directory: String) {
         let escapedDir = appleScriptEscape(directory)
         let script = """
         tell application "iTerm2"
