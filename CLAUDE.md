@@ -6,25 +6,19 @@ Claude Status is a native macOS menu bar app that monitors active Claude Code se
 
 ## Build & Test
 
-Xcode project with SPM dependencies (no standalone Package.swift). Build and test via `xcodebuild`:
+Xcode project with SPM dependencies (no standalone Package.swift). Use `just` for all build and test commands:
 
 ```bash
-# Build (no code signing, suitable for CI/local dev)
-xcodebuild -project "Claude Status.xcodeproj" -scheme "Claude Status" -configuration Debug build \
-  CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=15.0
-
-# Run unit tests
-xcodebuild -project "Claude Status.xcodeproj" -scheme "Claude Status" -configuration Debug test \
-  -only-testing:"Claude StatusTests" \
-  CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=15.0
-
-# Run a single test class
-xcodebuild -project "Claude Status.xcodeproj" -scheme "Claude Status" \
-  -only-testing:"Claude StatusTests/SessionStateTests" test \
-  CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=15.0
+just build          # Build debug configuration (includes plugin binaries)
+just test           # Run all unit tests
+just test-class SessionStateTests  # Run a single test class
+just clean          # Clean build artifacts
+just swap           # Build, copy to /Applications, and relaunch
+just sync-plugin    # Sync plugin to installed plugin cache
+just show-version   # Show calculated version from git tags
 ```
 
-The `MACOSX_DEPLOYMENT_TARGET=15.0` override is needed when building on Xcode versions that don't yet know about the project's macOS 26.2 deployment target.
+The justfile handles `MACOSX_DEPLOYMENT_TARGET=15.0` override (needed for Xcode versions that don't know about macOS 26.2) and disables code signing for local dev builds.
 
 ## Platform & Language
 

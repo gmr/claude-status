@@ -2,13 +2,17 @@ import WidgetKit
 import SwiftUI
 
 /// Timeline entry for productivity widgets.
-struct ProductivityEntry: TimelineEntry {
+nonisolated struct ProductivityEntry: TimelineEntry {
     let date: Date
     let data: ProductivityData?
 }
 
 /// Shared timeline provider for both productivity and score widgets.
-struct ProductivityTimelineProvider: TimelineProvider {
+///
+/// Explicitly `nonisolated` to opt out of `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`.
+/// WidgetKit calls provider methods from non-main threads; `@MainActor` isolation
+/// can cause the extension to crash with "Connection invalidated" on some macOS versions.
+nonisolated struct ProductivityTimelineProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> ProductivityEntry {
         let sample = ProductivityStats(
@@ -38,7 +42,9 @@ struct ProductivityTimelineProvider: TimelineProvider {
         let data = fetchData()
         let entry = ProductivityEntry(date: Date(), data: data)
 
-        let nextUpdate = Calendar.current.date(byAdding: .second, value: 15, to: Date())!
+        // Fallback refresh every 5 minutes. The main app pushes immediate updates
+        // via WidgetCenter.reloadTimelines, so this is only a safety net.
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 5, to: Date())!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }

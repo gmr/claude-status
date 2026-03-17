@@ -2,7 +2,7 @@ import WidgetKit
 import SwiftUI
 
 /// Timeline entry for the Claude Status widget.
-struct SessionEntry: TimelineEntry {
+nonisolated struct SessionEntry: TimelineEntry {
     let date: Date
     let sessions: [ClaudeSession]
 
@@ -13,7 +13,11 @@ struct SessionEntry: TimelineEntry {
 }
 
 /// Timeline provider for the Claude Status widget.
-struct Claude_StatusTimelineProvider: TimelineProvider {
+///
+/// Explicitly `nonisolated` to opt out of `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`.
+/// WidgetKit calls provider methods from non-main threads; `@MainActor` isolation
+/// can cause the extension to crash with "Connection invalidated" on some macOS versions.
+nonisolated struct Claude_StatusTimelineProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> SessionEntry {
         SessionEntry(date: Date(), sessions: [
@@ -63,11 +67,13 @@ struct Claude_StatusTimelineProvider: TimelineProvider {
         let currentDate = Date()
         let entry = SessionEntry(date: currentDate, sessions: sessions)
 
-        // Fallback refresh every 15 seconds (the main app also pushes updates
-        // via WidgetCenter.reloadTimelines on every session state change)
+        // Fallback refresh every 5 minutes. The main app pushes immediate updates
+        // via WidgetCenter.reloadTimelines on every session state change, so this
+        // is only a safety net. Aggressive policies (e.g. 15s) cause the system to
+        // kill the extension for excessive resource usage → "Connection invalidated".
         let nextUpdate = Calendar.current.date(
-            byAdding: .second,
-            value: 15,
+            byAdding: .minute,
+            value: 5,
             to: currentDate
         )!
 
