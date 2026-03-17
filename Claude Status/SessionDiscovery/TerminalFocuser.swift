@@ -76,7 +76,13 @@ struct SessionFocuser {
                 focusBySessionId(sessionId)
                 return
             }
-            openTab(at: workingDirectory)
+            openITermTab(at: workingDirectory)
+            return
+        }
+
+        // Ghostty supports focusing a specific terminal via AppleScript
+        if app == "Ghostty" {
+            focusGhosttyTerminal(workingDirectory: workingDirectory)
             return
         }
 
@@ -205,7 +211,26 @@ struct SessionFocuser {
             .replacingOccurrences(of: "\"", with: "\\\"")
     }
 
-    private func openTab(at directory: String) {
+    // MARK: - Ghostty
+
+    /// Finds a Ghostty terminal whose working directory matches the session's
+    /// and focuses it, bringing the containing window to front.
+    private func focusGhosttyTerminal(workingDirectory: String) {
+        let escapedDir = appleScriptEscape(workingDirectory)
+        let script = """
+        tell application "Ghostty"
+            set matched to every terminal whose working directory contains "\(escapedDir)"
+            if (count of matched) > 0 then
+                focus (item 1 of matched)
+            else
+                activate
+            end if
+        end tell
+        """
+        runAppleScript(script)
+    }
+
+    private func openITermTab(at directory: String) {
         let escapedDir = appleScriptEscape(directory)
         let script = """
         tell application "iTerm2"
