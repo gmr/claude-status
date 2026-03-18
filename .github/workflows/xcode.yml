@@ -46,7 +46,7 @@ jobs:
           tar -C claude-status-plugin/plugins/claude-status -czf plugin-binaries.tgz scripts
 
       - name: Upload plugin binaries
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: plugin-binaries
           path: plugin-binaries.tgz
@@ -64,7 +64,7 @@ jobs:
           submodules: true
 
       - name: Download plugin binaries
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: plugin-binaries
           path: .
@@ -97,7 +97,7 @@ jobs:
           submodules: true
 
       - name: Download plugin binaries
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: plugin-binaries
           path: .

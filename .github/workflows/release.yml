@@ -282,7 +282,7 @@ jobs:
           security delete-keychain "$RUNNER_TEMP/build.keychain-db" 2>/dev/null || true
 
       - name: Upload zip artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: app-zip
           path: ${{ steps.package.outputs.zip_name }}
@@ -300,7 +300,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download zip artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: app-zip
 
