@@ -227,10 +227,6 @@ struct SessionFocuser {
     /// refer to the same directory still match correctly.
     private func focusGhosttyTerminal(workingDirectory: String) {
         let escapedDir = appleScriptEscape(workingDirectory)
-        // Use AppleScript only to select the correct terminal/tab, without
-        // calling `activate` or `set index` which can pull the window to the
-        // current space. NSRunningApplication.activate() respects the macOS
-        // "switch to a Space with open windows" setting.
         let script = """
         tell application "Ghostty"
             set targetDir to "\(escapedDir)"
@@ -249,16 +245,16 @@ struct SessionFocuser {
                     end try
                     if normalTDir is normalTarget then
                         focus t
+                        set index of aWindow to 1
+                        activate
                         return
                     end if
                 end repeat
             end repeat
+            activate
         end tell
         """
         runAppleScript(script)
-        // Bring Ghostty to front via NSRunningApplication which respects
-        // the macOS Spaces "switch to a Space with open windows" preference
-        activateTerminalApp(name: "Ghostty")
     }
 
     // MARK: - WezTerm
