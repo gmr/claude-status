@@ -70,8 +70,11 @@ struct SessionDiscovery {
         return DiscoveryResult(sessions: sessions, cstatusFiles: cstatusFiles)
     }
 
-    /// Fast refresh: re-read only .cstatus files (no directory enumeration needed
-    /// if we already have cached paths). Falls back to full scan.
+    /// Fast refresh: re-read only `.cstatus` files using cached paths (no directory
+    /// enumeration). Unlike `discoverAll()`, this intentionally skips the heavier
+    /// terminal metadata prefetch (WezTerm panes, Ghostty tabs) for speed — so
+    /// `assembleSession(from:)` is called without pre-fetched terminal data, and
+    /// terminal-derived session names may be stale until the next full `discoverAll()`.
     mutating func refreshFromCache(_ cache: [String: URL]) -> DiscoveryResult {
         var sessions: [ClaudeSession] = []
         var cstatusFiles: [String: URL] = [:]

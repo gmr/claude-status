@@ -1,6 +1,8 @@
 import AppKit
 
 /// Shared helpers for querying Ghostty tab information via AppleScript.
+/// All mutable state is main-thread-only (callers are `@MainActor SessionMonitor`).
+@MainActor
 enum GhosttyHelper {
 
     struct TabInfo {
@@ -8,7 +10,7 @@ enum GhosttyHelper {
         let workingDirectory: String
     }
 
-    // MARK: - Cache
+    // MARK: - Cache (main-thread-only, enforced by @MainActor)
 
     private static var cachedTabs: [TabInfo] = []
     private static var cacheTimestamp: Date = .distantPast

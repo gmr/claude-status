@@ -88,7 +88,7 @@ struct SessionFocuser {
 
         // WezTerm supports focusing a specific pane via CLI
         if app == "WezTerm" {
-            focusWezTermTerminal(pid: pid, workingDirectory: workingDirectory)
+            focusWezTermTerminal(pid: pid)
             return
         }
 
@@ -261,7 +261,7 @@ struct SessionFocuser {
 
     /// Focuses a WezTerm pane by resolving the session's PID to a TTY,
     /// matching it against `wezterm cli list`, and activating the pane.
-    private func focusWezTermTerminal(pid: pid_t, workingDirectory: String) {
+    private func focusWezTermTerminal(pid: pid_t) {
         if let pane = WezTermHelper.findPaneFresh(for: pid) {
             WezTermHelper.activatePane(paneId: pane.paneId)
         }

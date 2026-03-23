@@ -2,6 +2,8 @@ import Foundation
 
 /// Shared helpers for interacting with the WezTerm CLI.
 /// Used by both TerminalFocuser (pane focusing) and SessionDiscovery (tab title lookup).
+/// All mutable state is main-thread-only (callers are `@MainActor SessionMonitor`).
+@MainActor
 enum WezTermHelper {
 
     /// Resolved path to the `wezterm` binary.
