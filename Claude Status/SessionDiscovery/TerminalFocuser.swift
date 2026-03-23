@@ -8,7 +8,7 @@ struct SessionFocuser {
     func focus(session: ClaudeSession) {
         switch session.source {
         case .terminal(let app):
-            focusTerminal(app: app, sessionId: session.iTermSessionId, tmuxPaneId: session.tmuxPaneId, tmuxSocket: session.tmuxSocket, workingDirectory: session.workingDirectory)
+            focusTerminal(app: app, pid: session.pid, sessionId: session.iTermSessionId, tmuxPaneId: session.tmuxPaneId, tmuxSocket: session.tmuxSocket, workingDirectory: session.workingDirectory)
         case .xcode:
             activateApp(bundleId: "com.apple.dt.Xcode")
         case .vscode:
@@ -57,7 +57,7 @@ struct SessionFocuser {
         "Ghostty": "com.mitchellh.ghostty",
     ]
 
-    private func focusTerminal(app: String, sessionId: String?, tmuxPaneId: String?, tmuxSocket: String?, workingDirectory: String) {
+    private func focusTerminal(app: String, pid: pid_t, sessionId: String?, tmuxPaneId: String?, tmuxSocket: String?, workingDirectory: String) {
         // tmux sessions: select the pane/window then activate the terminal
         if let paneId = tmuxPaneId {
             focusTmuxPane(paneId: paneId, socket: tmuxSocket)
@@ -83,6 +83,12 @@ struct SessionFocuser {
         // Ghostty supports focusing a specific terminal via AppleScript
         if app == "Ghostty" {
             focusGhosttyTerminal(workingDirectory: workingDirectory)
+            return
+        }
+
+        // WezTerm supports focusing a specific pane via CLI
+        if app == "WezTerm" {
+            focusWezTermTerminal(pid: pid, workingDirectory: workingDirectory)
             return
         }
 
@@ -249,6 +255,17 @@ struct SessionFocuser {
         end tell
         """
         runAppleScript(script)
+    }
+
+    // MARK: - WezTerm
+
+    /// Focuses a WezTerm pane by resolving the session's PID to a TTY,
+    /// matching it against `wezterm cli list`, and activating the pane.
+    private func focusWezTermTerminal(pid: pid_t, workingDirectory: String) {
+        if let pane = WezTermHelper.findPaneFresh(for: pid) {
+            WezTermHelper.activatePane(paneId: pane.paneId)
+        }
+        activateTerminalApp(name: "WezTerm")
     }
 
     private func openITermTab(at directory: String) {

@@ -34,6 +34,10 @@ final class SessionMonitor {
     /// Maps session ID → .cstatus file URL for fast notification-driven refresh.
     private var cstatusCache: [String: URL] = [:]
 
+    /// Re-entrancy guard — prevents concurrent refresh calls when blocking operations
+    /// (Process.waitUntilExit, AppleScript execution) pump the main run loop.
+    private var isRefreshing = false
+
     /// Cached plugin detection state and when it was last checked.
     private var lastPluginCheck: Date = .distantPast
     private var cachedPluginState: PluginInstallState = .unknown
@@ -115,6 +119,9 @@ final class SessionMonitor {
     /// Full refresh: directory scan + PID validation.
     /// Called on timer ticks and file system changes.
     func refresh() {
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        defer { isRefreshing = false }
         let result = discovery.discoverAll()
         applyResult(result)
     }
@@ -122,6 +129,7 @@ final class SessionMonitor {
     /// Notification-driven refresh: always do a full scan since the notification
     /// may signal a new session that isn't in our cache yet.
     private func refreshFromNotification() {
+        guard !isRefreshing else { return }
         discovery.clearDeadSessions()
         refresh()
     }

@@ -45,6 +45,17 @@ struct SessionDiscovery {
         var sessions: [ClaudeSession] = []
         var cstatusFiles: [String: URL] = [:]
 
+        // Pre-fetch WezTerm pane list once (cached, no subprocess per session)
+        let weztermPanes = WezTermHelper.listPanes()
+        // Build TTY → PaneInfo lookup for fast matching
+        var panesByTTY: [String: WezTermHelper.PaneInfo] = [:]
+        for pane in weztermPanes {
+            panesByTTY[pane.ttyName] = pane
+        }
+
+        // Pre-fetch Ghostty tab titles once (cached)
+        let ghosttyTabs = GhosttyHelper.listTabs()
+
         for record in records {
             if deadSessions.contains(record.sessionId) {
                 continue
@@ -53,7 +64,7 @@ struct SessionDiscovery {
                 deadSessions.insert(record.sessionId)
                 continue
             }
-            sessions.append(assembleSession(from: record))
+            sessions.append(assembleSession(from: record, weztermPanesByTTY: panesByTTY, ghosttyTabs: ghosttyTabs))
             cstatusFiles[record.sessionId] = record.fileURL
         }
         return DiscoveryResult(sessions: sessions, cstatusFiles: cstatusFiles)
@@ -178,7 +189,7 @@ struct SessionDiscovery {
     // MARK: - Session Assembly
 
     /// Builds a `ClaudeSession` from a validated `CStatusRecord`.
-    private func assembleSession(from record: CStatusRecord) -> ClaudeSession {
+    private func assembleSession(from record: CStatusRecord, weztermPanesByTTY: [String: WezTermHelper.PaneInfo] = [:], ghosttyTabs: [GhosttyHelper.TabInfo] = []) -> ClaudeSession {
         let source = classifySource(pid: record.pid, ppid: record.ppid)
         let projectName = (record.cwd as NSString).lastPathComponent
 
@@ -209,6 +220,25 @@ struct SessionDiscovery {
             tmuxSocket = nil
         }
 
+        // For terminal sessions without a session name, try to populate from tab title
+        var sessionName = record.sessionName
+        if sessionName == nil, case .terminal(let app) = source {
+            if app == "WezTerm" {
+                // Use pre-fetched pane list — resolve PID to TTY then look up in the map
+                if let tty = WezTermHelper.resolveTTY(for: record.pid),
+                   let pane = weztermPanesByTTY[tty],
+                   !pane.tabTitle.isEmpty {
+                    sessionName = pane.tabTitle
+                }
+            } else if app == "Ghostty" {
+                // Match by working directory from pre-fetched Ghostty tabs
+                if let tab = ghosttyTabs.first(where: { $0.workingDirectory == record.cwd }),
+                   !tab.name.isEmpty {
+                    sessionName = tab.name
+                }
+            }
+        }
+
         return ClaudeSession(
             sessionId: record.sessionId,
             pid: record.pid,
@@ -221,7 +251,7 @@ struct SessionDiscovery {
             tmuxSocket: tmuxSocket,
             source: source,
             activity: record.activity,
-            sessionName: record.sessionName
+            sessionName: sessionName
         )
     }
 
