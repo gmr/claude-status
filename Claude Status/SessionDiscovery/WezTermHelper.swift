@@ -31,49 +31,98 @@ enum WezTermHelper {
     private static let cacheTTL: TimeInterval = 10
     private static var isFetching = false
 
-    /// Cached PID → TTY mappings (TTYs don't change for a process lifetime).
-    private static var ttyCache: [pid_t: String] = [:]
+    /// Cached PID → TTY mappings with expiry to handle PID reuse.
+    private struct TTYCacheEntry {
+        let tty: String
+        let cachedAt: Date
+    }
+    private static var ttyCache: [pid_t: TTYCacheEntry] = [:]
+    private static let ttyCacheTTL: TimeInterval = 300 // 5 minutes
+
+    // MARK: - Process Helpers
+
+    /// Runs a process and returns its stdout output, or nil if the launch failed.
+    /// Only calls `waitUntilExit()` when the process successfully started.
+    private static func runProcess(
+        executablePath: String,
+        arguments: [String]
+    ) -> (output: String, status: Int32)? {
+        let process = Process()
+        let pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: executablePath)
+        process.arguments = arguments
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+        // Read pipe before waitUntilExit to avoid deadlock: if the subprocess
+        // writes more than the pipe buffer (~64 KB), it blocks waiting for the
+        // pipe to drain while we block waiting for exit.
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        let output = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return (output, process.terminationStatus)
+    }
+
+    /// Runs a process without capturing output (fire-and-forget with status).
+    private static func runProcessNoOutput(
+        executablePath: String,
+        arguments: [String]
+    ) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executablePath)
+        process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            return
+        }
+        process.waitUntilExit()
+    }
+
+    // MARK: - TTY Resolution
 
     /// Resolves the TTY device for a given PID by walking up the process tree.
     /// The Claude process itself typically doesn't own the TTY; the parent shell does.
-    /// Results are cached since TTYs don't change for a process's lifetime.
+    /// Results are cached with a TTL to handle PID reuse.
     static func resolveTTY(for pid: pid_t) -> String? {
-        if let cached = ttyCache[pid] {
-            return cached
+        let now = Date()
+        if let entry = ttyCache[pid], now.timeIntervalSince(entry.cachedAt) < ttyCacheTTL {
+            return entry.tty
         }
+
         var currentPid = pid
         for _ in 0..<10 {
-            let process = Process()
-            let pipe = Pipe()
-            process.executableURL = URL(fileURLWithPath: "/bin/ps")
-            process.arguments = ["-o", "tty=", "-p", "\(currentPid)"]
-            process.standardOutput = pipe
-            process.standardError = FileHandle.nullDevice
-            try? process.run()
-            process.waitUntilExit()
-            let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if !output.isEmpty && output != "??" {
-                let tty = "/dev/" + output
-                ttyCache[pid] = tty
+            guard let result = runProcess(
+                executablePath: "/bin/ps",
+                arguments: ["-o", "tty=", "-p", "\(currentPid)"]
+            ) else { break }
+
+            if !result.output.isEmpty && result.output != "??" {
+                let tty = "/dev/" + result.output
+                ttyCache[pid] = TTYCacheEntry(tty: tty, cachedAt: now)
                 return tty
             }
+
             // Walk up to parent
-            let ppidProcess = Process()
-            let ppidPipe = Pipe()
-            ppidProcess.executableURL = URL(fileURLWithPath: "/bin/ps")
-            ppidProcess.arguments = ["-o", "ppid=", "-p", "\(currentPid)"]
-            ppidProcess.standardOutput = ppidPipe
-            ppidProcess.standardError = FileHandle.nullDevice
-            try? ppidProcess.run()
-            ppidProcess.waitUntilExit()
-            let ppidStr = String(data: ppidPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            guard let parentPid = pid_t(ppidStr), parentPid > 1 else { break }
+            guard let ppidResult = runProcess(
+                executablePath: "/bin/ps",
+                arguments: ["-o", "ppid=", "-p", "\(currentPid)"]
+            ) else { break }
+
+            guard let parentPid = pid_t(ppidResult.output), parentPid > 1 else { break }
             currentPid = parentPid
         }
         return nil
     }
+
+    // MARK: - Pane Listing
 
     /// Queries `wezterm cli list --format json` and returns parsed pane info.
     /// Results are cached for 10 seconds to avoid spawning processes on every refresh.
@@ -90,22 +139,16 @@ enum WezTermHelper {
         let bin = weztermPath
         let usesEnv = bin == "/usr/bin/env"
 
-        let process = Process()
-        let pipe = Pipe()
-        process.executableURL = URL(fileURLWithPath: bin)
-        process.arguments = (usesEnv ? ["wezterm"] : []) + ["cli", "list", "--format", "json"]
-        process.standardOutput = pipe
-        process.standardError = FileHandle.nullDevice
-        try? process.run()
-        process.waitUntilExit()
-
-        guard process.terminationStatus == 0 else {
+        guard let result = runProcess(
+            executablePath: bin,
+            arguments: (usesEnv ? ["wezterm"] : []) + ["cli", "list", "--format", "json"]
+        ), result.status == 0 else {
             cacheTimestamp = now
             return cachedPanes
         }
 
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        guard let entries = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+        guard let data = result.output.data(using: .utf8),
+              let entries = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
             cacheTimestamp = now
             return cachedPanes
         }
@@ -137,6 +180,8 @@ enum WezTermHelper {
         return cachedPanes
     }
 
+    // MARK: - Pane Lookup
+
     /// Finds the pane whose TTY matches the given PID's TTY.
     static func findPane(for pid: pid_t) -> PaneInfo? {
         guard let tty = resolveTTY(for: pid) else { return nil }
@@ -154,12 +199,9 @@ enum WezTermHelper {
     static func activatePane(paneId: Int) {
         let bin = weztermPath
         let usesEnv = bin == "/usr/bin/env"
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: bin)
-        process.arguments = (usesEnv ? ["wezterm"] : []) + ["cli", "activate-pane", "--pane-id", "\(paneId)"]
-        process.standardError = FileHandle.nullDevice
-        try? process.run()
-        process.waitUntilExit()
+        runProcessNoOutput(
+            executablePath: bin,
+            arguments: (usesEnv ? ["wezterm"] : []) + ["cli", "activate-pane", "--pane-id", "\(paneId)"]
+        )
     }
 }
