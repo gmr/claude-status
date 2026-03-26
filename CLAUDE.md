@@ -37,7 +37,6 @@ The justfile handles `MACOSX_DEPLOYMENT_TARGET=15.0` override (needed for Xcode 
 | Package | Version | Purpose |
 |---------|---------|---------|
 | Sparkle | 2.9.0 | Auto-updates via Appcast (EdDSA-signed) |
-| rollbar-apple | 3.3.3 | Crash reporting and error tracking |
 | CocoaLumberjack | 3.9.0 | Structured logging |
 | swift-log | 1.10.1 | Swift logging API |
 
@@ -58,7 +57,7 @@ Claude Status/                         # Main app target
   AppMain.swift                        # Entry point, menu bar-only setup
   AppDelegate.swift                    # NSStatusItem, NSPopover, settings window, Sparkle updater
   Claude_StatusWidgetConfiguration.swift  # WidgetKit configuration
-  Info.plist                           # Sparkle feed URL, Rollbar token, URL scheme
+  Info.plist                           # Sparkle feed URL, URL scheme
   Claude Status.entitlements           # App Groups (no sandbox)
   SessionDiscovery/                    # Core session monitoring
     SessionDiscovery.swift             # Scans ~/.claude/projects/*/*.cstatus, validates PIDs, classifies source
@@ -155,7 +154,7 @@ Runs on push/PR to `main`. Two parallel jobs:
 - **Build**: `xcodebuild clean build` with code signing disabled
 - **Test**: `xcodebuild test` for `Claude StatusTests` only
 
-Both override `MACOSX_DEPLOYMENT_TARGET=15.0` and inject `ROLLBAR_ACCESS_TOKEN` from secrets.
+Both override `MACOSX_DEPLOYMENT_TARGET=15.0`.
 
 ### Release (`release.yml`)
 
@@ -168,8 +167,7 @@ Triggered by publishing a GitHub release. The release tag becomes `MARKETING_VER
 4. `xcodebuild archive` with manual signing, hardened runtime
 5. `xcodebuild -exportArchive` with `ExportOptions.plist` mapping each bundle ID to its provisioning profile
 6. Notarize the `.app` and `.pkg` via `notarytool` (fetches Apple log on failure)
-7. Upload dSYMs to Rollbar, post deploy notification
-8. Upload `.zip` and `.pkg` as release assets
+7. Upload `.zip` and `.pkg` as release assets
 
 **Update Appcast job:**
 1. Downloads Sparkle tools, generates `appcast.xml` with EdDSA signature
@@ -190,5 +188,3 @@ Triggered by publishing a GitHub release. The release tag becomes `MARKETING_VER
 | `APPLE_ID_PASSWORD` | App-specific password for notarization |
 | `SPARKLE_ED_PUBLIC_KEY` | EdDSA public key embedded in builds |
 | `SPARKLE_PRIVATE_KEY` | EdDSA private key for signing appcast |
-| `ROLLBAR_ACCESS_TOKEN` | Client-side Rollbar token (compiled into app) |
-| `ROLLBAR_DSYM_TOKEN` | Server-side Rollbar token for dSYM upload and deploy tracking |
