@@ -3,6 +3,7 @@ scheme := "Claude Status"
 # Override deployment target for CI/older Xcode that doesn't know macOS 26.2
 xcode_flags := "CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=15.0"
 app_name := "Claude Status"
+team_id := "6ZWB9X826X"
 
 # Calculate version from git tags: tag + .devN for unreleased commits
 version := `tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"); commits=$(git rev-list --count "$tag"...HEAD 2>/dev/null || echo "0"); if [ "$commits" -gt 0 ]; then echo "$tag.dev$commits"; else echo "$tag"; fi`
@@ -16,7 +17,7 @@ build-plugin:
     codesign -fs - claude-status-plugin/plugins/claude-status/scripts/session-status
     codesign -fs - claude-status-plugin/plugins/claude-status/scripts/set-session-name
 
-# Build debug configuration
+# Build debug configuration (unsigned, for CI and fast iteration)
 build: build-plugin
     xcodebuild -project "{{project}}" -scheme "{{scheme}}" -configuration Debug build {{xcode_flags}} MARKETING_VERSION="{{version}}"
 
@@ -34,11 +35,18 @@ test-class class:
 clean:
     xcodebuild -project "{{project}}" -scheme "{{scheme}}" clean {{xcode_flags}}
 
-# Kill running app, copy debug build to /Applications, and relaunch
-swap: build
+# Kill running app, copy signed debug build to /Applications, and relaunch.
+# Uses Xcode automatic signing with Apple Development certificate.
+swap: build-plugin
     #!/usr/bin/env bash
     set -euo pipefail
-    derived_data=$(xcodebuild -project "Claude Status.xcodeproj" -scheme "Claude Status" -showBuildSettings 2>/dev/null | grep ' BUILD_DIR ' | awk '{print $3}')
+    xcodebuild -project "{{project}}" -scheme "{{scheme}}" -configuration Debug build \
+        -allowProvisioningUpdates \
+        MACOSX_DEPLOYMENT_TARGET=15.0 \
+        CODE_SIGN_STYLE=Automatic \
+        DEVELOPMENT_TEAM="{{team_id}}" \
+        MARKETING_VERSION="{{version}}"
+    derived_data=$(xcodebuild -project "{{project}}" -scheme "{{scheme}}" -showBuildSettings 2>/dev/null | grep ' BUILD_DIR ' | awk '{print $3}')
     pkill -x "{{app_name}}" || true
     sleep 0.5
     rm -rf "/Applications/{{app_name}}.app"
