@@ -39,7 +39,7 @@ struct ScoreWidgetView: View {
                             .foregroundStyle(isFullColor ? scoreColor(stats.score) : .primary)
                         Text("Score")
                             .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
+                            .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                     }
                 }
                 .frame(width: 90, height: 90)
@@ -54,7 +54,7 @@ struct ScoreWidgetView: View {
                         }
                         Text("\(Int(stats.activePercent * 100))%")
                             .font(.system(size: 9))
-                            .foregroundStyle(.secondary)
+                            .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                     }
                     HStack(spacing: 2) {
                         if isFullColor {
@@ -65,12 +65,12 @@ struct ScoreWidgetView: View {
                         }
                         Text("\(Int(stats.waitingPercent * 100))%")
                             .font(.system(size: 9))
-                            .foregroundStyle(.secondary)
+                            .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                     }
                     if stats.peakConcurrency > 1 {
                         Text("\u{26A1}\(stats.peakConcurrency)")
                             .font(.system(size: 9))
-                            .foregroundStyle(.secondary)
+                            .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                     }
                 }
             }
@@ -82,17 +82,17 @@ struct ScoreWidgetView: View {
                     VStack(spacing: 0) {
                         Text("--")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .foregroundStyle(.secondary)
+                            .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                         Text("Score")
                             .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
+                            .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                     }
                 }
                 .frame(width: 90, height: 90)
 
                 Text("No data yet")
                     .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
+                    .widgetForeground(.tertiary, opacity: 0.6, isFullColor: isFullColor)
             }
         }
     }
