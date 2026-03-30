@@ -3,7 +3,7 @@ scheme := "Claude Status"
 # Override deployment target for CI/older Xcode that doesn't know macOS 26.2
 xcode_flags := "CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=15.0"
 app_name := "Claude Status"
-team_id := "6ZWB9X826X"
+team_id := env_var_or_default("DEVELOPMENT_TEAM", "6ZWB9X826X")
 
 # Calculate version from git tags: tag + .devN for unreleased commits
 version := `tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"); commits=$(git rev-list --count "$tag"...HEAD 2>/dev/null || echo "0"); if [ "$commits" -gt 0 ]; then echo "$tag.dev$commits"; else echo "$tag"; fi`
@@ -40,17 +40,18 @@ clean:
 swap: build-plugin
     #!/usr/bin/env bash
     set -euo pipefail
+    build_dir="/tmp/claude-status-swap"
     xcodebuild -project "{{project}}" -scheme "{{scheme}}" -configuration Debug build \
+        -derivedDataPath "$build_dir" \
         -allowProvisioningUpdates \
         MACOSX_DEPLOYMENT_TARGET=15.0 \
         CODE_SIGN_STYLE=Automatic \
         DEVELOPMENT_TEAM="{{team_id}}" \
         MARKETING_VERSION="{{version}}"
-    derived_data=$(xcodebuild -project "{{project}}" -scheme "{{scheme}}" -showBuildSettings 2>/dev/null | grep ' BUILD_DIR ' | awk '{print $3}')
     pkill -x "{{app_name}}" || true
     sleep 0.5
     rm -rf "/Applications/{{app_name}}.app"
-    cp -R "${derived_data}/Debug/{{app_name}}.app" "/Applications/{{app_name}}.app"
+    cp -R "$build_dir/Build/Products/Debug/{{app_name}}.app" "/Applications/{{app_name}}.app"
     open -a "{{app_name}}"
 
 # Show the calculated version
