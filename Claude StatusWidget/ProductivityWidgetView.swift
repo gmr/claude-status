@@ -52,7 +52,7 @@ struct ProductivityWidgetView: View {
                 Spacer()
                 Text(stats.totalTimeFormatted)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
             }
 
             // Stacked horizontal bar — uses opacity for vibrant mode
@@ -98,7 +98,7 @@ struct ProductivityWidgetView: View {
                         .foregroundStyle(isFullColor ? .green : .primary)
                     Text(stats.activeTimeFormatted)
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                 }
                 Spacer()
                 HStack(spacing: 3) {
@@ -107,7 +107,7 @@ struct ProductivityWidgetView: View {
                         .foregroundStyle(isFullColor ? .blue : .primary)
                     Text("Peak \(stats.peakConcurrency)")
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                 }
                 Spacer()
                 HStack(spacing: 3) {
@@ -116,7 +116,7 @@ struct ProductivityWidgetView: View {
                         .foregroundStyle(isFullColor ? .purple : .primary)
                     Text("Score \(stats.score)")
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
                 }
             }
         }
@@ -126,13 +126,13 @@ struct ProductivityWidgetView: View {
         VStack(spacing: 6) {
             Image(systemName: "chart.bar.fill")
                 .font(.system(size: 24))
-                .foregroundStyle(.secondary)
+                .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
             Text("No data yet")
                 .font(.system(size: 12))
-                .foregroundStyle(.secondary)
+                .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
             Text("Stats appear as sessions run")
                 .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
+                .widgetForeground(.tertiary, opacity: 0.6, isFullColor: isFullColor)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -158,7 +158,7 @@ struct ProductivityWidgetView: View {
             }
             Text("\(label) \(Int(percent * 100))%")
                 .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+                .widgetForeground(.secondary, opacity: 0.8, isFullColor: isFullColor)
         }
     }
 }
