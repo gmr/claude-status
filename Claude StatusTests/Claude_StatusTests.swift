@@ -1,3 +1,5 @@
+import AppKit
+import Carbon.HIToolbox
 import Foundation
 import Testing
 @testable import Claude_Status
@@ -322,5 +324,66 @@ struct ProfileStoreTests {
         try FileManager.default.createDirectory(at: bogus, withIntermediateDirectories: true)
         store.addManualProfile(at: bogus)
         #expect(store.profiles.count == 1)
+    }
+}
+
+struct KeyboardNavigationTests {
+
+    @Test func emptyListHasNoSelection() {
+        #expect(SessionListView.nextSelectionIndex(current: nil, delta: 1, count: 0) == nil)
+        #expect(SessionListView.nextSelectionIndex(current: nil, delta: -1, count: 0) == nil)
+    }
+
+    @Test func firstKeypressSelectsAnEnd() {
+        #expect(SessionListView.nextSelectionIndex(current: nil, delta: 1, count: 3) == 0)
+        #expect(SessionListView.nextSelectionIndex(current: nil, delta: -1, count: 3) == 2)
+    }
+
+    @Test func movesAndWraps() {
+        #expect(SessionListView.nextSelectionIndex(current: 0, delta: 1, count: 3) == 1)
+        #expect(SessionListView.nextSelectionIndex(current: 2, delta: 1, count: 3) == 0)
+        #expect(SessionListView.nextSelectionIndex(current: 1, delta: -1, count: 3) == 0)
+        #expect(SessionListView.nextSelectionIndex(current: 0, delta: -1, count: 3) == 2)
+    }
+
+    @Test func staleSelectionResetsToAnEnd() {
+        // Selection index beyond the list (sessions disappeared) starts over
+        #expect(SessionListView.nextSelectionIndex(current: 5, delta: 1, count: 3) == 0)
+        #expect(SessionListView.nextSelectionIndex(current: 5, delta: -1, count: 3) == 2)
+    }
+
+    @Test func digitKeysMapToRows() {
+        #expect(SessionListView.sessionIndex(forDigit: 1) == 0)
+        #expect(SessionListView.sessionIndex(forDigit: 9) == 8)
+        #expect(SessionListView.sessionIndex(forDigit: 0) == 9)
+        #expect(SessionListView.sessionIndex(forDigit: 10) == nil)
+        #expect(SessionListView.sessionIndex(forDigit: -1) == nil)
+    }
+}
+
+struct GlobalHotkeyTests {
+
+    @Test func displayStringOrdersModifiers() {
+        // Space has a fixed label, so this doesn't depend on the active
+        // keyboard layout the way letter keys do
+        let hotkey = GlobalHotkey(
+            keyCode: UInt32(kVK_Space),
+            carbonModifiers: UInt32(controlKey | optionKey | cmdKey)
+        )
+        #expect(hotkey.displayString == "\u{2303}\u{2325}\u{2318}Space")
+    }
+
+    @Test func modifierConversion() {
+        let flags: NSEvent.ModifierFlags = [.command, .shift]
+        let carbon = GlobalHotkey.carbonModifiers(from: flags)
+        #expect(carbon & UInt32(cmdKey) != 0)
+        #expect(carbon & UInt32(shiftKey) != 0)
+        #expect(carbon & UInt32(controlKey) == 0)
+        #expect(carbon & UInt32(optionKey) == 0)
+    }
+
+    @Test func specialKeyLabel() {
+        let hotkey = GlobalHotkey(keyCode: UInt32(kVK_Space), carbonModifiers: UInt32(cmdKey))
+        #expect(hotkey.displayString == "\u{2318}Space")
     }
 }

@@ -68,10 +68,14 @@ Claude Status/                         # Main app target
     ProductivityTracker.swift          # Time-in-state tracking, concurrency, score (persists to App Group)
     PluginDetector.swift               # Checks installed_plugins.json and settings.json for hook status
     PluginInstaller.swift              # Installs/uninstalls bundled plugin via `claude plugin` CLI
+  Hotkey/                              # Global keyboard shortcut
+    GlobalHotkey.swift                 # Shortcut model, UserDefaults persistence, display string
+    HotkeyManager.swift                # System-wide hotkey via Carbon RegisterEventHotKey
   Views/                               # SwiftUI views
-    SessionListView.swift              # Popover: header, session list, empty state, Settings/Quit
+    SessionListView.swift              # Popover: header, session list (arrow-key navigation), empty state, Settings/Quit
     SessionRowView.swift               # Session row: status icon, project, source, activity, time
-    SettingsView.swift                 # Icon style picker, launch at login, plugin management
+    SettingsView.swift                 # Icon style picker, launch at login, hotkey recorder, plugin management
+    HotkeyRecorderView.swift           # Click-to-record shortcut control for Settings
     ProductivityBarView.swift          # Visual productivity tracking bar
 
 Shared/                                # Models shared between app and widget

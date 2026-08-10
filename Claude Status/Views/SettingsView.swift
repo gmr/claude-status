@@ -9,10 +9,15 @@ struct SettingsView: View {
     var updater: SPUUpdater?
     var onInstallPlugin: (ClaudeProfile) -> Void
     var onUninstallPlugin: (ClaudeProfile) -> Void
+    /// Applies the stored hotkey; returns false when registration failed.
+    var onHotkeyChange: (() -> Bool)? = nil
+    var onHotkeyRecordingChanged: ((Bool) -> Void)? = nil
 
     @AppStorage("iconStyle", store: AppGroup.defaults)
     private var iconStyle: SessionIconStyle = .emoji
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var hotkey = GlobalHotkey.stored
+    @State private var hotkeyRegistrationFailed = false
 
     var body: some View {
         Form {
@@ -30,6 +35,45 @@ struct SettingsView: View {
                     .onChange(of: launchAtLogin) { _, newValue in
                         toggleLaunchAtLogin(newValue)
                     }
+            }
+
+            Section {
+                HStack {
+                    Text("Open Session List")
+                    Spacer()
+                    HotkeyRecorderView(
+                        hotkey: $hotkey,
+                        onRecordingChanged: onHotkeyRecordingChanged
+                    )
+                    Button("Clear") {
+                        hotkey = nil
+                    }
+                    .disabled(hotkey == nil)
+                }
+                .onChange(of: hotkey) { _, newValue in
+                    GlobalHotkey.stored = newValue
+                    if onHotkeyChange?() == false {
+                        // Leave nothing half-configured: the shortcut isn't
+                        // registered, so don't keep it stored or displayed
+                        hotkeyRegistrationFailed = true
+                        GlobalHotkey.stored = nil
+                        hotkey = nil
+                    } else if newValue != nil {
+                        hotkeyRegistrationFailed = false
+                    }
+                }
+
+                if hotkeyRegistrationFailed {
+                    Text("That shortcut couldn't be registered — it may be reserved by the system. Try a different combination.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            } header: {
+                Text("Keyboard Shortcut")
+            } footer: {
+                Text("Opens the session list from anywhere. Use \u{2191}\u{2193} and Return to focus a session, or press 1\u{2013}9 (0 for the tenth) to jump straight to it. No shortcut is set by default.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if let updater {

@@ -19,11 +19,20 @@ struct SessionRowView: View {
     var iconStyle: SessionIconStyle = .emoji
     /// Show which profile the session belongs to (multi-profile setups).
     var showProfileBadge: Bool = false
+    /// Highlighted via keyboard navigation.
+    var isSelected: Bool = false
+    /// Digit key that jumps to this row (1-9, 0 for the tenth row).
+    var shortcutHint: Int? = nil
 
     @State private var isHovered = false
 
     var body: some View {
         HStack(spacing: 6) {
+            Text(shortcutHint.map(String.init) ?? "")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(.tertiary)
+                .frame(width: 8, alignment: .trailing)
+
             statusIndicator
                 .frame(width: 16, alignment: .leading)
 
@@ -79,7 +88,7 @@ struct SessionRowView: View {
         .padding(.horizontal, 14)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isHovered ? Color.primary.opacity(0.08) : Color.clear)
+                .fill(highlightColor)
                 .padding(.horizontal, 6)
         )
         .contentShape(Rectangle())
@@ -97,6 +106,16 @@ struct SessionRowView: View {
             Circle()
                 .fill(dotColor)
                 .frame(width: 8, height: 8)
+        }
+    }
+
+    private var highlightColor: Color {
+        if isSelected {
+            Color.accentColor.opacity(0.25)
+        } else if isHovered {
+            Color.primary.opacity(0.08)
+        } else {
+            Color.clear
         }
     }
 

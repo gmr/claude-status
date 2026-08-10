@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let monitor = SessionMonitor()
     private let focuser = SessionFocuser()
     private let pluginInstaller = PluginInstaller()
+    private let hotkeyManager = HotkeyManager()
     private var eventMonitor: Any?
     private var settingsWindow: NSWindow?
 
@@ -37,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusItem()
         setupPopover()
         setupURLHandler()
+        setupHotkey()
         monitor.start()
 
         // Initialize Sparkle only if a valid EdDSA public key is configured
@@ -315,9 +317,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             monitor.refresh()
             guard let button = statusItem.button else { return }
+            // Activate so the popover window can become key and receive
+            // arrow/Return key events for session navigation
+            NSApp.activate(ignoringOtherApps: true)
             // Defer to next run loop tick to avoid layout recursion
             DispatchQueue.main.async { [weak self] in
-                self?.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                guard let self else { return }
+                self.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                self.popover.contentViewController?.view.window?.makeKey()
             }
         }
     }
@@ -326,6 +333,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if popover.isShown {
             popover.performClose(nil)
         }
+    }
+
+    // MARK: - Global Hotkey
+
+    private func setupHotkey() {
+        hotkeyManager.onHotkey = { [weak self] in
+            self?.togglePopover()
+        }
+        applyHotkeySettings()
+    }
+
+    /// Re-reads the stored hotkey configuration and (re)registers or
+    /// unregisters the global shortcut accordingly. Returns false when a
+    /// stored shortcut could not be registered with the system.
+    @discardableResult
+    private func applyHotkeySettings() -> Bool {
+        if let hotkey = GlobalHotkey.stored {
+            return hotkeyManager.register(hotkey)
+        }
+        hotkeyManager.unregister()
+        return true
     }
 
     // MARK: - Plugin Installation
@@ -495,6 +523,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.performPluginUninstall(for: [profile])
                 self?.settingsWindow?.close()
                 self?.showSettings()
+            },
+            onHotkeyChange: { [weak self] in
+                self?.applyHotkeySettings() ?? false
+            },
+            onHotkeyRecordingChanged: { [weak self] recording in
+                // Suspend the shortcut while recording so the current
+                // combination can be typed as the new one
+                if recording {
+                    self?.hotkeyManager.unregister()
+                } else {
+                    self?.applyHotkeySettings()
+                }
             }
         )
 
