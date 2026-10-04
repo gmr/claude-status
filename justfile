@@ -56,7 +56,7 @@ swap: build-plugin
     sleep 0.5
     rm -rf "/Applications/{{app_name}}.app"
     cp -R "$build_dir/Build/Products/Debug/{{app_name}}.app" "/Applications/{{app_name}}.app"
-    open -a "{{app_name}}"
+    open "/Applications/{{app_name}}.app"
 
 # Show the calculated version
 show-version:
