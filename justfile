@@ -8,8 +8,9 @@ team_id := env_var_or_default("DEVELOPMENT_TEAM", "6ZWB9X826X")
 # provisioning profile on macOS, unlike the group.* release identifier.
 app_group := env_var_or_default("APP_GROUP_ID", "group.com.poisonpenllc.Claude-Status")
 
-# Calculate version from git tags: tag + .devN for unreleased commits
-version := `tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"); commits=$(git rev-list --count "$tag"...HEAD 2>/dev/null || echo "0"); if [ "$commits" -gt 0 ]; then echo "$tag.dev$commits"; else echo "$tag"; fi`
+# Calculate version from git tags: tag + .devN for unreleased commits.
+# The leading "v" is stripped, as release.yml does.
+version := `tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"); commits=$(git rev-list --count "$tag"...HEAD 2>/dev/null || echo "0"); tag="${tag#v}"; if [ "$commits" -gt 0 ]; then echo "$tag.dev$commits"; else echo "$tag"; fi`
 
 # Build the Rust plugin binaries and copy to the plugin scripts directory
 build-plugin:
