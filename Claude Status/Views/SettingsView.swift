@@ -32,6 +32,24 @@ struct SettingsView: View {
                     }
             }
 
+            if let build = BuildInfo.current {
+                Section {
+                    LabeledContent("Version", value: Bundle.main.appVersion)
+                    LabeledContent("Source", value: build.source)
+                    LabeledContent("Branch", value: build.branch)
+                    LabeledContent("Commit") {
+                        Text(build.commit).textSelection(.enabled)
+                    }
+                    LabeledContent("Built", value: build.date)
+                } header: {
+                    Text("Development Build")
+                } footer: {
+                    Text("Automatic updates are disabled for local builds.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             if let updater {
                 Section("Updates") {
                     Toggle(isOn: Binding(

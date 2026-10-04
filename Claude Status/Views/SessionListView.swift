@@ -32,6 +32,9 @@ struct SessionListView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            if let build = BuildInfo.current {
+                devBuildBanner(build)
+            }
             Divider()
 
             if sessions.isEmpty {
@@ -93,6 +96,27 @@ struct SessionListView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+
+    /// Shown only for local builds, so a development copy can't pass for a release.
+    private func devBuildBanner(_ build: BuildInfo) -> some View {
+        HStack(spacing: 6) {
+            Text("DEV")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 1)
+                .background(Capsule().fill(.orange))
+            Text(build.summary)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 8)
+        .help("Development build \(build.summary), built \(build.date)")
     }
 
     private var emptyState: some View {
