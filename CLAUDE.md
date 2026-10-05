@@ -66,6 +66,7 @@ Claude Status/                         # Main app target
     StateResolver.swift                # DispatchSource file watchers (one per profile); JSONL timestamp fallback
     TerminalFocuser.swift              # SessionFocuser: focuses host app (AppleScript for iTerm2/Ghostty, process activation for others)
     VSCodeSessionLocator.swift         # Finds the VS Code window of an extension session (extension host log dir)
+    VSCodeURITrust.swift               # Reads/adds the Claude Code extension in VS Code's trusted URI handlers setting
     ProductivityTracker.swift          # Time-in-state tracking, concurrency, score (persists to App Group)
     PluginDetector.swift               # Checks installed_plugins.json and settings.json for hook status
     PluginInstaller.swift              # Installs/uninstalls bundled plugin via `claude plugin` CLI
@@ -142,7 +143,13 @@ VS Code sessions run by the Claude Code extension are revealed in their own wind
 `logs/<launch>/window<N>/exthost/`. The app opens `vscode://anthropic.claude-code/open?windowId=<N>&session=<id>`;
 VS Code routes it to window N and the extension reveals the session's existing tab. Without a window ID the
 extension would resume the session in a new tab of the last active window, so the app then only activates VS Code
-(also the behavior for `claude` in the integrated terminal). VS Code asks once to allow the extension to open URIs.
+(also the behavior for `claude` in the integrated terminal).
+
+VS Code confirms URIs aimed at an untrusted extension, and shows that dialog in the target window *before* raising it,
+so the click looks like a no-op. On the first click the app checks `extensions.confirmedUriHandlerExtensionIds` in
+`~/Library/Application Support/Code/User/settings.json` and, if `anthropic.claude-code` is missing, offers to add it
+(in-place text edit that keeps the file's formatting). Declining with "Don't ask again" sets `vscodeTrustPromptDeclined`
+in the app's defaults and keeps the plain VS Code activation.
 
 ### Productivity Tracking
 

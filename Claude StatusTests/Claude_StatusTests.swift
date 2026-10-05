@@ -368,3 +368,58 @@ struct VSCodeSessionLocatorTests {
         #expect(VSCodeSessionLocator.windowId(forSessionPid: getpid()) == nil)
     }
 }
+
+struct VSCodeURITrustTests {
+
+    private let key = "\"extensions.confirmedUriHandlerExtensionIds\""
+
+    @Test func detectsTrust() {
+        #expect(VSCodeURITrust.isTrusted(settings: "{ \(key): [\"anthropic.claude-code\"] }"))
+        #expect(VSCodeURITrust.isTrusted(settings: "{\n  \(key): [\n    \"other.ext\",\n    \"Anthropic.Claude-Code\"\n  ]\n}"))
+        #expect(!VSCodeURITrust.isTrusted(settings: "{ \(key): [\"other.ext\"] }"))
+        #expect(!VSCodeURITrust.isTrusted(settings: "{ \"editor.fontSize\": 13 }"))
+        #expect(!VSCodeURITrust.isTrusted(settings: ""))
+    }
+
+    @Test func insertsSettingAsFirstMember() throws {
+        let settings = "{\n    \"editor.fontSize\": 13,\n    \"files.autoSave\": \"off\"\n}\n"
+        let updated = try #require(VSCodeURITrust.addingTrust(to: settings))
+        #expect(updated == "{\n    \(key): [\"anthropic.claude-code\"],\n    \"editor.fontSize\": 13,\n    \"files.autoSave\": \"off\"\n}\n")
+        #expect(VSCodeURITrust.isTrusted(settings: updated))
+        #expect(try JSONSerialization.jsonObject(with: Data(updated.utf8)) is [String: Any])
+    }
+
+    @Test func keepsTabIndentationAndLeadingComments() throws {
+        let settings = "// my settings {\n/* block */\n{\n\t\"editor.fontSize\": 13\n}\n"
+        let updated = try #require(VSCodeURITrust.addingTrust(to: settings))
+        #expect(updated == "// my settings {\n/* block */\n{\n\t\(key): [\"anthropic.claude-code\"],\n\t\"editor.fontSize\": 13\n}\n")
+    }
+
+    @Test func fillsEmptyObjectAndEmptyFile() throws {
+        let fromEmptyObject = try #require(VSCodeURITrust.addingTrust(to: "{}"))
+        #expect(fromEmptyObject == "{\n    \(key): [\"anthropic.claude-code\"]\n}")
+        #expect(try JSONSerialization.jsonObject(with: Data(fromEmptyObject.utf8)) is [String: Any])
+
+        let fromNothing = try #require(VSCodeURITrust.addingTrust(to: "  \n"))
+        #expect(VSCodeURITrust.isTrusted(settings: fromNothing))
+        #expect(try JSONSerialization.jsonObject(with: Data(fromNothing.utf8)) is [String: Any])
+    }
+
+    @Test func extendsExistingArray() throws {
+        let other = try #require(VSCodeURITrust.addingTrust(to: "{ \(key): [ \"other.ext\" ], \"a\": 1 }"))
+        #expect(other == "{ \(key): [\"anthropic.claude-code\", \"other.ext\" ], \"a\": 1 }")
+
+        let empty = try #require(VSCodeURITrust.addingTrust(to: "{ \(key): [ ] }"))
+        #expect(empty == "{ \(key): [\"anthropic.claude-code\"] }")
+    }
+
+    @Test func leavesTrustedSettingsUnchanged() {
+        let settings = "{ \(key): [\"anthropic.claude-code\"] }"
+        #expect(VSCodeURITrust.addingTrust(to: settings) == settings)
+    }
+
+    @Test func refusesNonObjectText() {
+        #expect(VSCodeURITrust.addingTrust(to: "[1, 2]") == nil)
+        #expect(VSCodeURITrust.addingTrust(to: "// only a comment") == nil)
+    }
+}

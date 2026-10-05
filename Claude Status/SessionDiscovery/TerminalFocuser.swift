@@ -34,15 +34,61 @@ struct SessionFocuser {
     }
 
     /// Reveals an extension session in its own VS Code window and tab. Falls back
-    /// to activating VS Code for sessions in the integrated terminal, or when the
-    /// window can't be found.
+    /// to activating VS Code for sessions in the integrated terminal, when the
+    /// window can't be found, or when VS Code doesn't trust the extension's links.
     private func focusVSCode(session: ClaudeSession) {
-        if let windowId = VSCodeSessionLocator.windowId(forSessionPid: session.pid),
-           let url = VSCodeSessionLocator.openSessionURL(sessionId: session.sessionId, windowId: windowId) {
-            NSWorkspace.shared.open(url)
+        guard let windowId = VSCodeSessionLocator.windowId(forSessionPid: session.pid),
+              let url = VSCodeSessionLocator.openSessionURL(sessionId: session.sessionId, windowId: windowId) else {
+            activateApp(bundleId: "com.microsoft.VSCode")
             return
         }
-        activateApp(bundleId: "com.microsoft.VSCode")
+
+        if VSCodeURITrust.isTrusted() {
+            NSWorkspace.shared.open(url)
+        } else if !UserDefaults.standard.bool(forKey: Self.vscodeTrustDeclinedKey), askToTrustVSCodeLinks() {
+            // VS Code reloads its settings asynchronously; without a pause the URI
+            // could still be confirmed in a background window.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                NSWorkspace.shared.open(url)
+            }
+        } else {
+            activateApp(bundleId: "com.microsoft.VSCode")
+        }
+    }
+
+    private static let vscodeTrustDeclinedKey = "vscodeTrustPromptDeclined"
+
+    /// Offers to add the Claude Code extension to VS Code's trusted URI handlers.
+    /// Returns true once the setting is written.
+    private func askToTrustVSCodeLinks() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Open VS Code Sessions in Their Window?"
+        alert.informativeText = "VS Code asks before the Claude Code extension opens a link, and shows the question in a background window, so the click seems to do nothing.\n\nClaude Status can add \"\(VSCodeURITrust.extensionId)\" to \"\(VSCodeURITrust.settingKey)\" in your VS Code user settings. Links to the Claude Code extension will then open without confirmation, whichever app opens them."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Allow")
+        alert.addButton(withTitle: "Not Now")
+        alert.showsSuppressionButton = true
+        alert.suppressionButton?.title = "Don't ask again"
+
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            if alert.suppressionButton?.state == .on {
+                UserDefaults.standard.set(true, forKey: Self.vscodeTrustDeclinedKey)
+            }
+            return false
+        }
+
+        do {
+            try VSCodeURITrust.trust()
+            return true
+        } catch {
+            let errorAlert = NSAlert()
+            errorAlert.messageText = "Couldn't Update VS Code Settings"
+            errorAlert.informativeText = "Add \"\(VSCodeURITrust.extensionId)\" to \"\(VSCodeURITrust.settingKey)\" in \(VSCodeURITrust.settingsURL.path) by hand.\n\n\(error.localizedDescription)"
+            errorAlert.alertStyle = .warning
+            errorAlert.runModal()
+            return false
+        }
     }
 
     /// Activates the frontmost JetBrains IDE. Multiple JetBrains IDEs may be
