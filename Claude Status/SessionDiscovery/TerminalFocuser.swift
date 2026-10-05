@@ -12,7 +12,7 @@ struct SessionFocuser {
         case .xcode:
             activateApp(bundleId: "com.apple.dt.Xcode")
         case .vscode:
-            activateApp(bundleId: "com.microsoft.VSCode")
+            focusVSCode(session: session)
         case .jetbrains:
             activateJetBrainsApp()
         
@@ -31,6 +31,18 @@ struct SessionFocuser {
             return
         }
         app.activate()
+    }
+
+    /// Reveals an extension session in its own VS Code window and tab. Falls back
+    /// to activating VS Code for sessions in the integrated terminal, or when the
+    /// window can't be found.
+    private func focusVSCode(session: ClaudeSession) {
+        if let windowId = VSCodeSessionLocator.windowId(forSessionPid: session.pid),
+           let url = VSCodeSessionLocator.openSessionURL(sessionId: session.sessionId, windowId: windowId) {
+            NSWorkspace.shared.open(url)
+            return
+        }
+        activateApp(bundleId: "com.microsoft.VSCode")
     }
 
     /// Activates the frontmost JetBrains IDE. Multiple JetBrains IDEs may be

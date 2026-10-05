@@ -324,3 +324,47 @@ struct ProfileStoreTests {
         #expect(store.profiles.count == 1)
     }
 }
+
+struct VSCodeSessionLocatorTests {
+
+    @Test func windowIdFromExtensionHostLogPath() {
+        let logs = "/Users/me/Library/Application Support/Code/logs/20261004T120123"
+        #expect(VSCodeSessionLocator.windowId(fromLogPath: "\(logs)/window8/exthost/exthost.log") == 8)
+        #expect(VSCodeSessionLocator.windowId(fromLogPath: "\(logs)/window12/exthost/vscode.git/Git.log") == 12)
+        // Logs that don't belong to a window's extension host.
+        #expect(VSCodeSessionLocator.windowId(fromLogPath: "\(logs)/ptyhost.log") == nil)
+        #expect(VSCodeSessionLocator.windowId(fromLogPath: "\(logs)/window3/renderer.log") == nil)
+        #expect(VSCodeSessionLocator.windowId(fromLogPath: "/tmp/window3/exthost/x.log") == nil)
+    }
+
+    @Test func openSessionURLTargetsWindow() throws {
+        let sessionId = "70ee46ae-6aa5-4f66-b251-951af27c7c94"
+        let url = try #require(VSCodeSessionLocator.openSessionURL(sessionId: sessionId, windowId: 8))
+        #expect(url.absoluteString == "vscode://anthropic.claude-code/open?windowId=8&session=\(sessionId)")
+    }
+
+    @Test func openSessionURLRejectsNonUUID() {
+        #expect(VSCodeSessionLocator.openSessionURL(sessionId: "x\" & rm", windowId: 1) == nil)
+        #expect(VSCodeSessionLocator.openSessionURL(sessionId: "", windowId: 1) == nil)
+    }
+
+    @Test func windowIdFromOpenFileDescriptors() throws {
+        // Hold a file open at an extension-host-like log path, then read it back
+        // through libproc from this very process.
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("logs/\(UUID().uuidString)/window42/exthost", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir.deletingLastPathComponent().deletingLastPathComponent()) }
+        let file = dir.appendingPathComponent("exthost.log")
+        FileManager.default.createFile(atPath: file.path, contents: Data())
+        let handle = try FileHandle(forWritingTo: file)
+        defer { try? handle.close() }
+
+        #expect(VSCodeSessionLocator.windowId(forExtensionHostPid: getpid()) == 42)
+    }
+
+    @Test func nonExtensionProcessHasNoWindow() {
+        // The test host isn't the Claude Code extension's binary.
+        #expect(VSCodeSessionLocator.windowId(forSessionPid: getpid()) == nil)
+    }
+}
