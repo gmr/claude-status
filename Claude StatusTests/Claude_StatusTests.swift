@@ -423,3 +423,14 @@ struct VSCodeURITrustTests {
         #expect(VSCodeURITrust.addingTrust(to: "// only a comment") == nil)
     }
 }
+
+struct VSCodeURITrustStorageTests {
+
+    @Test func parsesStorageValue() {
+        #expect(VSCodeURITrust.isTrusted(storageValue: #"["anthropic.claude-code","anthropic.claude-code"]"#))
+        #expect(VSCodeURITrust.isTrusted(storageValue: #"["other.ext","Anthropic.Claude-Code"]"#))
+        #expect(!VSCodeURITrust.isTrusted(storageValue: #"["other.ext"]"#))
+        #expect(!VSCodeURITrust.isTrusted(storageValue: "[]"))
+        #expect(!VSCodeURITrust.isTrusted(storageValue: "not json"))
+    }
+}
