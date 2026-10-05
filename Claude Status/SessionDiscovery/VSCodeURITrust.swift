@@ -40,7 +40,9 @@ enum VSCodeURITrust {
 
     /// Adds the extension to the setting, creating the file if needed.
     static func trust() throws {
-        let url = settingsURL
+        // Write through a symlink (dotfiles, Home Manager) rather than replace it;
+        // a read-only target then fails instead of silently forking the file.
+        let url = settingsURL.resolvingSymlinksInPath()
         let text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
         guard let updated = addingTrust(to: text) else {
             throw CocoaError(.fileReadCorruptFile, userInfo: [NSFilePathErrorKey: url.path])
