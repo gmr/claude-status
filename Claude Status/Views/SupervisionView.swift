@@ -72,6 +72,8 @@ struct ConversationPreviewView: View {
                 entries: entries,
                 waitingQuestion: session.state == .waiting ? pendingQuestion ?? "" : nil
             )
+            Divider()
+            footer
         }
         .task(id: session.id) {
             while !Task.isCancelled {
@@ -94,10 +96,19 @@ struct ConversationPreviewView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Open in \(session.source.label)", action: onOpen)
-                .keyboardShortcut(.defaultAction)
         }
         .padding(12)
+    }
+
+    /// Bottom left, where the IDE's prompt box sits: the hand is already there.
+    private var footer: some View {
+        HStack {
+            Button("Open in \(session.source.label)", action: onOpen)
+                .keyboardShortcut(.defaultAction)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     /// The last thing Claude said or asked, shown while the session waits.
