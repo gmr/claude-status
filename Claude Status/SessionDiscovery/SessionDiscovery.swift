@@ -251,6 +251,10 @@ struct SessionDiscovery {
             if path.contains(".vscode/extensions/anthropic.claude-code") {
                 return .vscode
             }
+            // The desktop app downloads its own claude binary under its support directory.
+            if path.contains("/Application Support/Claude/claude-code/") {
+                return .claudeDesktop
+            }
         }
 
         // Check environment variables on the Claude process
@@ -277,6 +281,9 @@ struct SessionDiscovery {
                 }
                 if path.contains("/Visual Studio Code.app/") || path.contains("/Code.app/") {
                     return .vscode
+                }
+                if path.contains("/Claude.app/") {
+                    return .claudeDesktop
                 }
 
                 // Terminals

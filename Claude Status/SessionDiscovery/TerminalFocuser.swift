@@ -18,6 +18,8 @@ struct SessionFocuser {
         
         case .zed:
             activateApp(bundleId: "dev.zed.Zed")
+        case .claudeDesktop:
+            activateApp(bundleId: "com.anthropic.claudefordesktop")
         }
     }
 

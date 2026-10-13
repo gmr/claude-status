@@ -324,3 +324,16 @@ struct ProfileStoreTests {
         #expect(store.profiles.count == 1)
     }
 }
+
+struct ClaudeDesktopSourceTests {
+
+    @Test func label() {
+        #expect(SessionSource.claudeDesktop.label == "Claude Desktop")
+        #expect(!SessionSource.claudeDesktop.isTerminal)
+    }
+
+    @Test func roundTripsThroughCodable() throws {
+        let data = try JSONEncoder().encode(SessionSource.claudeDesktop)
+        #expect(try JSONDecoder().decode(SessionSource.self, from: data) == .claudeDesktop)
+    }
+}
