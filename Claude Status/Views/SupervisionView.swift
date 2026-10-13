@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 /// Supervision window: every session on the left, a live preview of the
 /// selected conversation on the right.
@@ -67,11 +68,10 @@ struct ConversationPreviewView: View {
         VStack(spacing: 0) {
             header
             Divider()
-            transcript
-            if session.state == .waiting {
-                Divider()
-                waitingBanner
-            }
+            ConversationWebView(
+                entries: entries,
+                waitingQuestion: session.state == .waiting ? pendingQuestion ?? "" : nil
+            )
         }
         .task(id: session.id) {
             while !Task.isCancelled {
@@ -98,48 +98,6 @@ struct ConversationPreviewView: View {
                 .keyboardShortcut(.defaultAction)
         }
         .padding(12)
-    }
-
-    private var transcript: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
-                    if entries.isEmpty {
-                        Text("Nothing to show yet.")
-                            .foregroundStyle(.tertiary)
-                    }
-                    ForEach(entries) { entry in
-                        TranscriptEntryView(entry: entry)
-                    }
-                    Color.clear.frame(height: 1).id("bottom")
-                }
-                .padding(12)
-                .textSelection(.enabled)
-            }
-            .onChange(of: entries) {
-                proxy.scrollTo("bottom", anchor: .bottom)
-            }
-        }
-    }
-
-    private var waitingBanner: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "hourglass")
-                .foregroundStyle(.orange)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Waiting for your answer")
-                    .font(.subheadline.weight(.semibold))
-                if let question = pendingQuestion {
-                    Text(question)
-                        .font(.callout)
-                        .lineLimit(6)
-                        .textSelection(.enabled)
-                }
-            }
-            Spacer()
-        }
-        .padding(12)
-        .background(Color.orange.opacity(0.12))
     }
 
     /// The last thing Claude said or asked, shown while the session waits.
@@ -169,48 +127,86 @@ struct ConversationPreviewView: View {
     }
 }
 
-/// One item of the conversation preview.
-private struct TranscriptEntryView: View {
-    let entry: TranscriptEntry
+/// Renders the conversation with `conversation.html` (bundled marked + mermaid),
+/// so markdown, tables and diagrams display as they do in the IDE.
+struct ConversationWebView: NSViewRepresentable {
+    let entries: [TranscriptEntry]
+    /// Question to pin at the bottom while the session waits; nil otherwise.
+    let waitingQuestion: String?
 
-    var body: some View {
-        switch entry.kind {
-        case .user(let text):
-            HStack {
-                Spacer(minLength: 40)
-                Text(text)
-                    .padding(8)
-                    .background(Color.accentColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
-            }
-        case .assistant(let text):
-            Text(markdown(text))
-                .frame(maxWidth: .infinity, alignment: .leading)
-        case .thinking:
-            Label("Thinking\u{2026}", systemImage: "brain")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-        case .toolUse(let name, let summary):
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Image(systemName: name == "AskUserQuestion" ? "questionmark.bubble" : "wrench.and.screwdriver")
-                    .foregroundStyle(name == "AskUserQuestion" ? .orange : .secondary)
-                Text(name)
-                    .fontWeight(.medium)
-                Text(summary)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(name == "AskUserQuestion" ? nil : 2)
-            }
-            .font(.system(size: 11, design: .monospaced))
-        case .toolResult(let text, let isError):
-            Text(text.isEmpty ? "(no output)" : String(text.prefix(400)))
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(isError ? .red : .secondary)
-                .lineLimit(4)
-                .padding(.leading, 20)
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> WKWebView {
+        let webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        webView.navigationDelegate = context.coordinator
+        webView.setValue(false, forKey: "drawsBackground")
+        if let page = Bundle.main.url(forResource: "conversation", withExtension: "html") {
+            webView.loadFileURL(page, allowingReadAccessTo: page.deletingLastPathComponent())
         }
+        context.coordinator.webView = webView
+        return webView
     }
 
-    private func markdown(_ text: String) -> AttributedString {
-        let options = AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-        return (try? AttributedString(markdown: text, options: options)) ?? AttributedString(text)
+    func updateNSView(_ webView: WKWebView, context: Context) {
+        context.coordinator.show(payload(), in: webView)
+    }
+
+    private func payload() -> String {
+        let items: [[String: Any]] = entries.map { entry in
+            switch entry.kind {
+            case .user(let text): ["kind": "user", "text": text]
+            case .assistant(let text): ["kind": "assistant", "text": text]
+            case .thinking: ["kind": "thinking"]
+            case .toolUse(let name, let summary): ["kind": "tool", "name": name, "text": summary]
+            case .toolResult(let text, let isError): ["kind": "result", "text": String(text.prefix(2000)), "isError": isError]
+            }
+        }
+        let object: [String: Any] = ["entries": items, "waiting": waitingQuestion ?? NSNull()]
+        let data = (try? JSONSerialization.data(withJSONObject: object)) ?? Data("{}".utf8)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        weak var webView: WKWebView?
+        private var isLoaded = false
+        private var pending: String?
+        private var shown: String?
+
+        /// Sends the payload once the page is loaded, skipping unchanged content.
+        func show(_ payload: String, in webView: WKWebView) {
+            guard payload != shown else { return }
+            guard isLoaded else {
+                pending = payload
+                return
+            }
+            let firstRender = shown == nil
+            shown = payload
+            let call = firstRender
+                ? "render(Object.assign(\(payload), {scrollToBottom: true}))"
+                : "render(\(payload))"
+            webView.evaluateJavaScript(call)
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            isLoaded = true
+            if let pending {
+                self.pending = nil
+                show(pending, in: webView)
+            }
+        }
+
+        /// Links open in the default browser; the page itself never navigates.
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
+            if navigationAction.navigationType == .linkActivated, let url = navigationAction.request.url {
+                NSWorkspace.shared.open(url)
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(navigationAction.request.url?.isFileURL == true ? .allow : .cancel)
+        }
     }
 }

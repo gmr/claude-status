@@ -519,6 +519,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Shows the single supervision window, reusing it (and its selection) once created.
     private func showSupervision() {
+        // A regular app while the window is open, so app switchers (Cmd-Tab,
+        // DockDoor) list it; back to menu bar only once it closes.
+        NSApp.setActivationPolicy(.regular)
+
         if let existing = supervisionWindow {
             existing.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -536,6 +540,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.isReleasedWhenClosed = false
         window.center()
         window.setFrameAutosaveName("SupervisionWindow")
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification, object: window, queue: .main
+        ) { _ in
+            NSApp.setActivationPolicy(.accessory)
+        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
