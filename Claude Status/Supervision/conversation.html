@@ -49,14 +49,14 @@
   #waiting { position: sticky; bottom: -16px; margin: 16px -16px -16px; padding: 10px 16px 12px;
              background: var(--wait-bg); border-top: 1px solid var(--rule); backdrop-filter: blur(20px); }
   #waiting .title { color: var(--wait); font-weight: 600; margin-bottom: 4px; }
-  #waiting .md { max-height: 12em; overflow-y: auto; }
+  #question { font-size: 15px; font-weight: 600; line-height: 1.4; }
 </style>
 <script src="marked.min.js"></script>
 <script src="mermaid.min.js"></script>
 </head>
 <body>
 <div id="log"><p class="empty">Nothing to show yet.</p></div>
-<div id="waiting" hidden><div class="title">Waiting for your answer</div><div class="md" id="question"></div></div>
+<div id="waiting" hidden><div class="title">Waiting for your answer</div><div id="question"></div></div>
 <script>
   const escapeHTML = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -106,6 +106,13 @@
     }
   }
 
+  // Last line asking something (else the last line), without its list marker.
+  function lastQuestion(text) {
+    const lines = text.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("|") && !line.startsWith("```"));
+    const line = [...lines].reverse().find((l) => l.includes("?")) ?? lines[lines.length - 1] ?? "";
+    return line.replace(/^(?:[-*+]|\d+[.)])\s+/, "").replace(/^#+\s+/, "");
+  }
+
   function entryNode(entry) {
     const node = document.createElement("div");
     node.className = "entry";
@@ -150,8 +157,9 @@
 
     const waiting = document.getElementById("waiting");
     waiting.hidden = !payload.waiting;
-    const question = document.getElementById("question");
-    question.replaceChildren(...(payload.waiting ? markdown(payload.waiting).childNodes : []));
+    // The full message is already in the log: pin only its last question.
+    const question = lastQuestion(payload.waiting || "");
+    document.getElementById("question").innerHTML = question ? marked.parseInline(question) : "";
 
     await drawDiagrams(document.body);
     if (atBottom || payload.scrollToBottom) scroller.scrollTop = scroller.scrollHeight;
