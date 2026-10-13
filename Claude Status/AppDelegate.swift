@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let pluginInstaller = PluginInstaller()
     private var eventMonitor: Any?
     private var settingsWindow: NSWindow?
+    private var supervisionWindow: NSWindow?
 
     /// Sparkle updater controller for automatic updates.
     /// Only initialized when a valid EdDSA public key is present in Info.plist.
@@ -300,6 +301,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.closePopover()
                     self?.showSettings()
                 },
+                onSupervision: { [weak self] in
+                    self?.closePopover()
+                    self?.showSupervision()
+                },
                 onQuit: {
                     NSApplication.shared.terminate(nil)
                 }
@@ -510,6 +515,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow = window
     }
 
+    // MARK: - Supervision Window
+
+    /// Shows the single supervision window, reusing it (and its selection) once created.
+    private func showSupervision() {
+        if let existing = supervisionWindow {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let supervisionView = SupervisionView(monitor: monitor) { [weak self] session in
+            self?.focuser.focus(session: session)
+        }
+        let window = NSWindow(contentViewController: NSHostingController(rootView: supervisionView))
+        window.title = "Claude Status Supervision"
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        window.setContentSize(NSSize(width: 900, height: 600))
+        window.contentMinSize = NSSize(width: 640, height: 400)
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.setFrameAutosaveName("SupervisionWindow")
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        supervisionWindow = window
+    }
+
     // MARK: - Deep Link Handler
 
     private func setupURLHandler() {
@@ -578,6 +610,7 @@ private struct PopoverContentView: View {
     var onSessionTap: (ClaudeSession) -> Void
     var onRefresh: () -> Void
     var onSettings: () -> Void
+    var onSupervision: () -> Void
     var onQuit: () -> Void
 
     var body: some View {
@@ -588,6 +621,7 @@ private struct PopoverContentView: View {
             onSessionTap: onSessionTap,
             onRefresh: onRefresh,
             onSettings: onSettings,
+            onSupervision: onSupervision,
             onQuit: onQuit
         )
     }

@@ -65,12 +65,14 @@ Claude Status/                         # Main app target
     SessionMonitor.swift               # @Observable class: Darwin notifications + file watching + 5s polling
     StateResolver.swift                # DispatchSource file watchers (one per profile); JSONL timestamp fallback
     ITermFocuser.swift                 # Focuses host app (AppleScript for iTerm2, process activation for others)
+    TranscriptReader.swift             # Transcript tail for the preview; conversation titles (incremental)
     ProductivityTracker.swift          # Time-in-state tracking, concurrency, score (persists to App Group)
     PluginDetector.swift               # Checks installed_plugins.json and settings.json for hook status
     PluginInstaller.swift              # Installs/uninstalls bundled plugin via `claude plugin` CLI
   Views/                               # SwiftUI views
     SessionListView.swift              # Popover: header, session list, empty state, Settings/Quit
-    SessionRowView.swift               # Session row: status icon, project, source, activity, time
+    SessionRowView.swift               # Session row: project / conversation title / source + activity, state, time
+    SupervisionView.swift              # Supervision window: session list + live read-only conversation preview
     SettingsView.swift                 # Icon style picker, launch at login, plugin management
     ProductivityBarView.swift          # Visual productivity tracking bar
 

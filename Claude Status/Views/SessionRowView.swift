@@ -28,11 +28,10 @@ struct SessionRowView: View {
                 .frame(width: 16, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(session.sessionName ?? session.projectName)
-                    .font(.system(size: 13, weight: .medium))
-                    .lineLimit(1)
-
                 HStack(spacing: 4) {
+                    Text(session.projectName)
+                        .font(.system(size: 13, weight: .medium))
+                        .lineLimit(1)
                     if showProfileBadge, let profileName = session.profileName {
                         Text(profileName)
                             .font(.system(size: 9, weight: .medium))
@@ -42,14 +41,15 @@ struct SessionRowView: View {
                             .foregroundStyle(.secondary)
                             .clipShape(Capsule())
                     }
-                    if session.sessionName != nil {
-                        Text(session.projectName)
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                        Text("\u{2022}")
-                            .font(.system(size: 8))
-                            .foregroundStyle(.tertiary)
-                    }
+                }
+
+                Text(session.displayTitle ?? "New conversation")
+                    .font(.system(size: 11))
+                    .foregroundStyle(session.displayTitle == nil ? .tertiary : .primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                HStack(spacing: 4) {
                     Text(session.source.label)
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -60,6 +60,7 @@ struct SessionRowView: View {
                         Text(session.activity)
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                 }
             }

@@ -9,6 +9,7 @@ struct SessionListView: View {
     var onSessionTap: ((ClaudeSession) -> Void)?
     var onRefresh: (() -> Void)?
     var onSettings: (() -> Void)?
+    var onSupervision: (() -> Void)?
     var onQuit: (() -> Void)?
 
     @AppStorage("iconStyle", store: AppGroup.defaults)
@@ -152,6 +153,9 @@ struct SessionListView: View {
 
     private var menuSection: some View {
         VStack(spacing: 0) {
+            menuButton(action: { onSupervision?() }) {
+                Text("Supervision\u{2026}")
+            }
             menuButton(action: { onQuit?() }) {
                 Text("Quit")
             }
