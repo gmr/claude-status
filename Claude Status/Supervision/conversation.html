@@ -61,7 +61,16 @@
   const escapeHTML = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // Transcripts hold arbitrary text (tool output, pasted pages): raw HTML is shown, never run.
-  marked.use({ gfm: true, breaks: false, renderer: { html: ({ text }) => escapeHTML(text) } });
+  // Links keep only web and mail targets: a `javascript:` URL would run on click.
+  const safeURL = /^(https?:|mailto:)/i;
+  marked.use({ gfm: true, breaks: false, renderer: {
+    html: ({ text }) => escapeHTML(text),
+    link({ href, title, tokens }) {
+      const label = this.parser.parseInline(tokens);
+      if (!safeURL.test(href)) return label;
+      return `<a href="${escapeHTML(href)}"${title ? ` title="${escapeHTML(title)}"` : ""}>${label}</a>`;
+    },
+  } });
 
   const dark = matchMedia("(prefers-color-scheme: dark)").matches;
   mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: dark ? "dark" : "default" });
