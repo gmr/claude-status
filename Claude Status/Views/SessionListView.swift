@@ -9,6 +9,7 @@ struct SessionListView: View {
     var onSessionTap: ((ClaudeSession) -> Void)?
     var onRefresh: (() -> Void)?
     var onSettings: (() -> Void)?
+    var onSupervision: (() -> Void)?
     var onQuit: (() -> Void)?
 
     @AppStorage("iconStyle", store: AppGroup.defaults)
@@ -32,6 +33,10 @@ struct SessionListView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            menuButton(action: { onSupervision?() }) {
+                Label("Supervision\u{2026}", systemImage: "rectangle.split.2x1")
+            }
+            .padding(.bottom, 4)
             Divider()
 
             if sessions.isEmpty {
