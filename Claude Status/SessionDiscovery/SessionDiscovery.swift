@@ -234,7 +234,7 @@ struct SessionDiscovery {
     private func isProcessAlive(_ pid: pid_t) -> Bool {
         guard kill(pid, 0) == 0 else { return false }
         // Verify the process is actually Claude (guards against PID recycling)
-        guard let path = executablePath(for: pid) else { return true }
+        guard let path = Self.executablePath(for: pid) else { return true }
         return path.contains("claude") || path.contains("Claude") || path.hasSuffix("/node")
     }
 
@@ -244,7 +244,7 @@ struct SessionDiscovery {
     /// Starts from ppid (the process that launched Claude) and walks up.
     private func classifySource(pid: pid_t, ppid: pid_t) -> SessionSource {
         // Check the Claude process's own executable path for IDE-bundled binaries
-        if let path = executablePath(for: pid) {
+        if let path = Self.executablePath(for: pid) {
             if path.contains("/Developer/Xcode/CodingAssistant/") {
                 return .xcode
             }
@@ -270,7 +270,7 @@ struct SessionDiscovery {
         for _ in 0..<8 {
             guard current > 1 else { break }
 
-            if let path = executablePath(for: current) {
+            if let path = Self.executablePath(for: current) {
                 // IDEs
                 if path.contains("/Zed.app/") || path.contains("/zed-editor") {
                     return .zed
@@ -307,7 +307,7 @@ struct SessionDiscovery {
                 return .zed
             }
 
-            guard let nextPid = parentPid(for: current) else { break }
+            guard let nextPid = Self.parentPid(for: current) else { break }
             current = nextPid
         }
 
@@ -408,7 +408,7 @@ struct SessionDiscovery {
 
     // MARK: - Process Info Helpers
 
-    private func executablePath(for pid: pid_t) -> String? {
+    static func executablePath(for pid: pid_t) -> String? {
         var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
         let result = proc_pidpath(pid, &buffer, UInt32(buffer.count))
         guard result > 0 else { return nil }
@@ -422,7 +422,7 @@ struct SessionDiscovery {
         return String(cString: buffer)
     }
 
-    private func parentPid(for pid: pid_t) -> pid_t? {
+    static func parentPid(for pid: pid_t) -> pid_t? {
         var info = proc_bsdinfo()
         let size = Int32(MemoryLayout<proc_bsdinfo>.size)
         let result = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size)

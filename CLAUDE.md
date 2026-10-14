@@ -64,7 +64,9 @@ Claude Status/                         # Main app target
     SessionDiscovery.swift             # Scans each profile's projects/*/*.cstatus, validates PIDs, classifies source
     SessionMonitor.swift               # @Observable class: Darwin notifications + file watching + 5s polling
     StateResolver.swift                # DispatchSource file watchers (one per profile); JSONL timestamp fallback
-    ITermFocuser.swift                 # Focuses host app (AppleScript for iTerm2, process activation for others)
+    TerminalFocuser.swift              # SessionFocuser: focuses host app (AppleScript for iTerm2/Ghostty, process activation for others)
+    VSCodeSessionLocator.swift         # Finds the VS Code window of an extension session (extension host log dir)
+    VSCodeURITrust.swift               # Reads/adds the Claude Code extension in VS Code's trusted URI handlers setting
     ProductivityTracker.swift          # Time-in-state tracking, concurrency, score (persists to App Group)
     PluginDetector.swift               # Checks installed_plugins.json and settings.json for hook status
     PluginInstaller.swift              # Installs/uninstalls bundled plugin via `claude plugin` CLI
@@ -135,6 +137,19 @@ State is reported by the hook script in `.cstatus` files:
 **Terminals** (via process tree): iTerm2 (session-specific AppleScript focusing), Terminal, Warp, Alacritty, Kitty, WezTerm, Ghostty
 
 **IDEs** (via process tree): Xcode, VS Code, JetBrains IDEs, Zed
+
+VS Code sessions run by the Claude Code extension are revealed in their own window and tab:
+`claude`'s parent is the window's extension host, whose open log files sit under
+`logs/<launch>/window<N>/exthost/`. The app opens `vscode://anthropic.claude-code/open?windowId=<N>&session=<id>`;
+VS Code routes it to window N and the extension reveals the session's existing tab. Without a window ID the
+extension would resume the session in a new tab of the last active window, so the app then only activates VS Code
+(also the behavior for `claude` in the integrated terminal).
+
+VS Code confirms URIs aimed at an untrusted extension, and shows that dialog in the target window *before* raising it,
+so the click looks like a no-op. On the first click the app checks `extensions.confirmedUriHandlerExtensionIds` in
+`~/Library/Application Support/Code/User/settings.json` and, if `anthropic.claude-code` is missing, offers to add it
+(in-place text edit that keeps the file's formatting). Declining with "Don't ask again" sets `vscodeTrustPromptDeclined`
+in the app's defaults and keeps the plain VS Code activation.
 
 ### Productivity Tracking
 
