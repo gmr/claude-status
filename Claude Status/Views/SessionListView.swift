@@ -32,9 +32,6 @@ struct SessionListView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            if let build = BuildInfo.current {
-                devBuildBanner(build)
-            }
             Divider()
 
             if sessions.isEmpty {
@@ -60,6 +57,15 @@ struct SessionListView: View {
     // MARK: - Subviews
 
     private var header: some View {
+        VStack(spacing: 0) {
+            headerBar
+            if let build = BuildInfo.current {
+                devBuildBanner(build)
+            }
+        }
+    }
+
+    private var headerBar: some View {
         HStack(alignment: .bottom) {
             Text("Claude Status")
                 .font(.system(size: 13, weight: .semibold))
