@@ -68,6 +68,7 @@ Claude Status/                         # Main app target
     ProductivityTracker.swift          # Time-in-state tracking, concurrency, score (persists to App Group)
     PluginDetector.swift               # Checks installed_plugins.json and settings.json for hook status
     PluginInstaller.swift              # Installs/uninstalls bundled plugin via `claude plugin` CLI
+    ClaudeDesktopSessionLocator.swift  # Maps a CLI session to its Claude Desktop conversation (claude://code/continue)
   Views/                               # SwiftUI views
     SessionListView.swift              # Popover: header, session list, empty state, Settings/Quit
     SessionRowView.swift               # Session row: status icon, project, source, activity, time
@@ -133,6 +134,10 @@ State is reported by the hook script in `.cstatus` files:
 ### Host App Recognition
 
 **Terminals** (via process tree): iTerm2 (session-specific AppleScript focusing), Terminal, Warp, Alacritty, Kitty, WezTerm, Ghostty
+
+**Claude Desktop**: its `claude` binary lives under `~/Library/Application Support/Claude/claude-code/` and runs as a child
+of `Claude.app`. The app keeps one `claude-code-sessions/<account>/<org>/local_<uuid>.json` per Code session, mapping its
+`sessionId` to the CLI's `cliSessionId`; a click opens `claude://code/continue?session=local_<uuid>`, else activates the app.
 
 **IDEs** (via process tree): Xcode, VS Code, JetBrains IDEs, Zed
 

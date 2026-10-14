@@ -18,6 +18,13 @@ struct SessionFocuser {
         
         case .zed:
             activateApp(bundleId: "dev.zed.Zed")
+        case .claudeDesktop:
+            // Opens the session's own conversation when the app knows it.
+            if let url = ClaudeDesktopSessionLocator.continueURL(forCLISession: session.sessionId) {
+                NSWorkspace.shared.open(url)
+            } else {
+                activateApp(bundleId: "com.anthropic.claudefordesktop")
+            }
         }
     }
 
