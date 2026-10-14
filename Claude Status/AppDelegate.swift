@@ -39,8 +39,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupURLHandler()
         monitor.start()
 
-        // Initialize Sparkle only if a valid EdDSA public key is configured
-        if let edKey = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String,
+        // Initialize Sparkle only if a valid EdDSA public key is configured, and
+        // never for local builds: the appcast serves releases that would replace them.
+        if BuildInfo.current == nil,
+           let edKey = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String,
            !edKey.isEmpty {
             updaterController = SPUStandardUpdaterController(
                 startingUpdater: true,
@@ -95,6 +97,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.action = #selector(statusItemClicked)
         button.target = self
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        if let build = BuildInfo.current {
+            button.toolTip = "Claude Status (dev): \(build.summary)"
+        }
 
         updateStatusIcon()
 

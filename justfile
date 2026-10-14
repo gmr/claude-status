@@ -11,6 +11,15 @@ app_group := env_var_or_default("APP_GROUP_ID", "group.com.poisonpenllc.Claude-S
 # Calculate version from git tags: tag + .devN for unreleased commits
 version := `tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"); commits=$(git rev-list --count "$tag"...HEAD 2>/dev/null || echo "0"); if [ "$commits" -gt 0 ]; then echo "$tag.dev$commits"; else echo "$tag"; fi`
 
+# Build provenance shown by the app (popover banner, Settings), local builds only.
+# The commit gets "-dirty" when tracked files differ from HEAD; the plugin
+# submodule is ignored since build-plugin rewrites its binaries.
+build_source := `git remote get-url origin 2>/dev/null | sed -E 's#^(git@github\.com:|https://github\.com/)##; s#\.git$##' || true`
+build_branch := `git rev-parse --abbrev-ref HEAD 2>/dev/null || true`
+build_commit := `sha=$(git rev-parse --short HEAD 2>/dev/null || true); [ -n "$sha" ] && ! git diff --quiet --ignore-submodules HEAD 2>/dev/null && sha="$sha-dirty"; echo "$sha"`
+build_date := `date '+%Y-%m-%d %H:%M'`
+build_info_flags := 'CS_BUILD_SOURCE="' + build_source + '" CS_BUILD_BRANCH="' + build_branch + '" CS_BUILD_COMMIT="' + build_commit + '" CS_BUILD_DATE="' + build_date + '"'
+
 # Build the Rust plugin binaries and copy to the plugin scripts directory
 build-plugin:
     cd claude-status-plugin && cargo build --release
@@ -22,7 +31,7 @@ build-plugin:
 
 # Build debug configuration (unsigned, for CI and fast iteration)
 build: build-plugin
-    xcodebuild -project "{{project}}" -scheme "{{scheme}}" -configuration Debug build {{xcode_flags}} MARKETING_VERSION="{{version}}"
+    xcodebuild -project "{{project}}" -scheme "{{scheme}}" -configuration Debug build {{xcode_flags}} MARKETING_VERSION="{{version}}" {{build_info_flags}}
 
 # Run all unit tests
 test:
@@ -51,7 +60,8 @@ swap: build-plugin
         CODE_SIGN_STYLE=Automatic \
         DEVELOPMENT_TEAM="{{team_id}}" \
         APP_GROUP_ID="{{app_group}}" \
-        MARKETING_VERSION="{{version}}"
+        MARKETING_VERSION="{{version}}" \
+        {{build_info_flags}}
     pkill -x "{{app_name}}" || true
     sleep 0.5
     rm -rf "/Applications/{{app_name}}.app"

@@ -20,6 +20,14 @@
 	<string>1</string>
 	<key>AppGroupIdentifier</key>
 	<string>$(APP_GROUP_ID)</string>
+	<key>CSBuildSource</key>
+	<string>$(CS_BUILD_SOURCE)</string>
+	<key>CSBuildBranch</key>
+	<string>$(CS_BUILD_BRANCH)</string>
+	<key>CSBuildCommit</key>
+	<string>$(CS_BUILD_COMMIT)</string>
+	<key>CSBuildDate</key>
+	<string>$(CS_BUILD_DATE)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSUIElement</key>
