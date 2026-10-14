@@ -33,6 +33,10 @@ struct SessionListView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            menuButton(action: { onSupervision?() }) {
+                Label("Supervision\u{2026}", systemImage: "rectangle.split.2x1")
+            }
+            .padding(.bottom, 4)
             Divider()
 
             if sessions.isEmpty {
@@ -153,9 +157,6 @@ struct SessionListView: View {
 
     private var menuSection: some View {
         VStack(spacing: 0) {
-            menuButton(action: { onSupervision?() }) {
-                Text("Supervision\u{2026}")
-            }
             menuButton(action: { onQuit?() }) {
                 Text("Quit")
             }
